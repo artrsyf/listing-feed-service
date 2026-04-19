@@ -1,21 +1,21 @@
-FROM sbtscala/scala-sbt:eclipse-temurin-21.0.2_13_1.10.2 AS build
+FROM sbtscala/scala-sbt:eclipse-temurin-alpine-21.0.8_9_1.12.9_2.12.21 AS build
 
 WORKDIR /app
 
 COPY project ./project
 COPY build.sbt .
-
 COPY src ./src
+COPY secrets.env .
 
-RUN sbt clean assembly
+RUN sbt stage
 
 FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
 # копируем только результат сборки
-COPY --from=build /app/target/scala-2.13/*assembly*.jar app.jar
+COPY --from=build /app/target/universal/stage/ .
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["bin/feed"]

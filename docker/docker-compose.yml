@@ -1,0 +1,37 @@
+networks:
+  feed_service_network:
+
+services:
+  feed_service:
+    container_name: feed_service
+    env_file:
+      - ../secrets.env
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      feed_service_postgres:
+        condition: service_started
+    networks:
+      - feed_service_network
+
+  feed_service_postgres:
+    container_name: feed_service_postgres
+    env_file:
+      - ../postgres.env
+    image: postgres:17-alpine
+    volumes:
+      - ../src/main/resources/db/migrations:/docker-entrypoint-initdb.d/
+      - feed_service_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    expose:
+      - 5432
+    networks:
+      - feed_service_network
+
+volumes:
+  feed_service_postgres_data:
+    driver: "local"

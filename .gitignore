@@ -43,5 +43,11 @@ build/
 ### Scala ###
 .bsp/
 
+### Metals ###
+.metals/
+.bloop/
+metals.sbt
+
 ### Secrets ###
-src/main/resources/secrets.env
+secrets.env
+postgres.env

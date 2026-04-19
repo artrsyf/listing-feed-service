@@ -4,17 +4,18 @@ import sttp.tapir.ztapir.ZServerEndpoint
 import zio.Chunk
 import zio.ZLayer
 
-import feed.advertisement.route.AdvertisementRoute
+import feed.listing.route.ListingRoute
 
 trait RouteAggregator {
   def allRoutes: Chunk[ZServerEndpoint[Any, Any]]
 }
 
-final class RouteAggregatorImpl(advertisementRoute: AdvertisementRoute) extends RouteAggregator {
-  override def allRoutes: Chunk[ZServerEndpoint[Any, Any]] = advertisementRoute.routes
+final class RouteAggregatorImpl(listingRoute: ListingRoute) extends RouteAggregator {
+  override def allRoutes: Chunk[ZServerEndpoint[Any, Any]] =
+    listingRoute.routes
 }
 
 object RouteAggregatorImpl {
-  val layer: ZLayer[AdvertisementRoute, Nothing, RouteAggregator] = ZLayer
+  val layer: ZLayer[ListingRoute, Nothing, RouteAggregator] = ZLayer
     .derive[RouteAggregatorImpl]
 }
