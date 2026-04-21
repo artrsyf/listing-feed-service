@@ -1,5 +1,7 @@
 package feed.listing.route
 
+import java.time.Instant
+
 import sttp.tapir.json.zio._
 import sttp.tapir.ztapir._
 import zio._
@@ -19,9 +21,11 @@ final class ListingRouteImpl(listingHandler: ListingHandler) extends ListingRout
   private val getRecentListings =
     baseEndpoint.get
       .in("listings")
+      .in(query[Option[Instant]]("cursor"))
+      .in(query[Option[Int]]("limit"))
       .out(jsonBody[dto.GetAllListingsResponse])
       .errorOut(errorMapper)
-      .zServerLogic(_ => listingHandler.getRecentListings)
+      .zServerLogic { case (cursor, limit) => listingHandler.getRecentListings(cursor, limit) }
 
   private val getListing =
     baseEndpoint.get

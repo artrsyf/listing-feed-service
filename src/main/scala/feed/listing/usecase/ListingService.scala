@@ -1,5 +1,6 @@
 package feed.listing.usecase
 
+import java.time.Instant
 import java.util.UUID
 
 import zio._
@@ -9,11 +10,12 @@ import feed.listing.domain.entity.ListingError
 import feed.listing.domain.types.ListingId
 import feed.listing.repository.ListingRepository
 
-final class ListingService(
-  listingRepo: ListingRepository,
-  listingConfig: ListingConfig) {
-  def getRecentListings: IO[ListingError, List[entity.Listing]] =
-    listingRepo.getRecentListings(listingConfig.limit)
+final class ListingService(listingRepo: ListingRepository) {
+  def getRecentListings(
+    cursor: Option[Instant],
+    limit: Int
+  ): IO[ListingError, List[entity.Listing]] =
+    listingRepo.getRecentListings(cursor, limit)
 
   def getListing(listingId: ListingId): IO[ListingError, entity.Listing] =
     listingRepo.getById(listingId).someOrFail(ListingError.Notfound)

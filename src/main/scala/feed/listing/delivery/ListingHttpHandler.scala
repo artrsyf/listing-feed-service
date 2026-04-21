@@ -1,5 +1,7 @@
 package feed.listing.delivery
 
+import java.time.Instant
+
 import io.scalaland.chimney.dsl._
 import zio._
 
@@ -7,11 +9,19 @@ import feed.listing.domain.dto
 import feed.listing.domain.entity
 import feed.listing.domain.types.ListingId
 import feed.listing.shared.apierror.ApiError
+import feed.listing.shared.config.ListingConfig
 import feed.listing.usecase.ListingService
 
-final class ListingHttpHandler(listingService: ListingService) extends ListingHandler {
-  override def getRecentListings: IO[ApiError, dto.GetAllListingsResponse] =
-    listingService.getRecentListings
+final class ListingHttpHandler(
+  listingService: ListingService,
+  listingConfig: ListingConfig)
+    extends ListingHandler {
+  override def getRecentListings(
+    cursor: Option[Instant],
+    limit: Option[Int]
+  ): IO[ApiError, dto.GetAllListingsResponse] =
+    listingService
+      .getRecentListings(cursor, limit.getOrElse(listingConfig.limit))
       .mapBoth(
         {
           case entity.ListingError
@@ -77,6 +87,6 @@ final class ListingHttpHandler(listingService: ListingService) extends ListingHa
 }
 
 object ListingHttpHandler {
-  val layer: ZLayer[ListingService, Nothing, ListingHandler] = ZLayer
+  val layer: RLayer[ListingService, ListingHandler] = ZLayer
     .derive[ListingHttpHandler]
 }

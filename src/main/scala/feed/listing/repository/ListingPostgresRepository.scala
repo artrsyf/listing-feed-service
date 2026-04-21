@@ -17,15 +17,32 @@ import feed.listing.domain.model.ListingStatusDoobieImplicits._
 import feed.listing.domain.types.ListingId
 
 class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository {
-  override def getRecentListings(limit: Int): IO[PersistenceLayerError, List[entity.Listing]] =
-    (for {
-      listings <- sql"""
+  override def getRecentListings(
+    cursor: Option[Instant],
+    limit: Int
+  ): IO[PersistenceLayerError, List[entity.Listing]] = {
+    val req = cursor match {
+      case Some(c) =>
+        sql"""
+        SELECT id, title, description, price, currency, status, created_at, updated_at
+        FROM listings
+        WHERE status = 'ACTIVE'::listing_status
+          AND created_at < $c
+        ORDER BY created_at DESC
+        LIMIT $limit
+      """
+      case None =>
+        sql"""
         SELECT id, title, description, price, currency, status, created_at, updated_at
         FROM listings
         WHERE status = 'ACTIVE'::listing_status
         ORDER BY created_at DESC
         LIMIT $limit
       """
+    }
+
+    (for {
+      listings <- req
         .query[model.Listing]
         .to[List]
         .transact(xa)
@@ -46,6 +63,7 @@ class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository 
         )
       }
     } yield result).mapError(e => PersistenceLayerError(e.getMessage))
+  }
 
   override def getById(listingId: ListingId): IO[PersistenceLayerError, Option[entity.Listing]] =
     (for {
@@ -133,6 +151,6 @@ class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository 
 }
 
 object ListingPostgresRepository {
-  val layer: ZLayer[HikariTransactor[Task], Nothing, ListingRepository] = ZLayer
-    .fromFunction(new ListingPostgresRepository(_))
+  val layer: RLayer[HikariTransactor[Task], ListingRepository] =
+    ZLayer.derive[ListingPostgresRepository]
 }

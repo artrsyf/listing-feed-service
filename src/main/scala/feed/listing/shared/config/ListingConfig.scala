@@ -1,4 +1,4 @@
-package feed.listing.usecase
+package feed.listing.shared.config
 
 import zio.Config
 import zio.config.magnolia._
