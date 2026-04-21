@@ -5,7 +5,8 @@ import sttp.tapir._
 import sttp.tapir.json.zio.jsonBody
 import zio.json._
 
-sealed trait ApiError
+sealed trait ApiError extends Product with Serializable
+
 object ApiError {
   final case class Internal(msg: String) extends ApiError
 
@@ -26,6 +27,11 @@ object ApiError {
       .gen[NotFound]
     implicit val notFoundSchema: Schema[NotFound] = Schema
       .derived[NotFound]
+
+    val listing = NotFound("Listing not found")
+
+    val default =
+      NotFound("Object not found")
   }
 
   val errorMapper = oneOf[ApiError](

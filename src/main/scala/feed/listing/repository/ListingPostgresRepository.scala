@@ -17,17 +17,7 @@ import feed.listing.domain.model.ListingStatusDoobieImplicits._
 import feed.listing.domain.types.ListingId
 
 class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository {
-  override def getRecentListings(limit: Int): IO[PersistenceLayerError, List[entity.Listing]] = {
-    def getListingImages(listingId: ListingId) = sql"""
-        SELECT id, listing_id, url, key, position, created_at
-        FROM listing_images
-        WHERE listing_id = $listingId
-        ORDER BY position ASC
-      """
-      .query[model.ListingImage]
-      .to[List]
-      .transact(xa)
-
+  override def getRecentListings(limit: Int): IO[PersistenceLayerError, List[entity.Listing]] =
     (for {
       listings <- sql"""
         SELECT id, title, description, price, currency, status, created_at, updated_at
@@ -56,7 +46,33 @@ class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository 
         )
       }
     } yield result).mapError(e => PersistenceLayerError(e.getMessage))
-  }
+
+  override def getById(listingId: ListingId): IO[PersistenceLayerError, Option[entity.Listing]] =
+    (for {
+      listing <- sql"""
+        SELECT id, title, description, price, currency, status, created_at, updated_at
+        FROM listings
+        WHERE id = $listingId
+        LIMIT 1
+      """
+        .query[model.Listing]
+        .option
+        .transact(xa)
+      images <- getListingImages(listingId)
+      result = listing.map(l =>
+        entity.Listing(
+          id = l.id,
+          title = l.title,
+          description = l.description,
+          price = l.price,
+          currency = l.currency,
+          status = l.status,
+          images = images.map(_.transformInto[entity.ListingImage]),
+          createdAt = l.createdAt,
+          updatedAt = l.updatedAt
+        )
+      )
+    } yield result).mapError(e => PersistenceLayerError(e.getMessage))
 
   override def create(listing: entity.Listing): IO[PersistenceLayerError, Unit] = {
     val action =
@@ -69,6 +85,16 @@ class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository 
       .transact(xa)
       .mapError(e => PersistenceLayerError(e.getMessage))
   }
+
+  private def getListingImages(listingId: ListingId) = sql"""
+        SELECT id, listing_id, url, key, position, created_at
+        FROM listing_images
+        WHERE listing_id = $listingId
+        ORDER BY position ASC
+      """
+    .query[model.ListingImage]
+    .to[List]
+    .transact(xa)
 
   // TODO: Починить костыль с енамом
   private def insertListing(listing: entity.Listing): ConnectionIO[Int] =
