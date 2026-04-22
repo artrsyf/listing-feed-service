@@ -1,5 +1,8 @@
 package feed
 
+import com.sksamuel.elastic4s.ElasticClient
+import com.sksamuel.elastic4s.ElasticProperties
+import com.sksamuel.elastic4s.http.JavaClient
 import sttp.apispec.openapi.Info
 import sttp.tapir.server.ziohttp._
 import sttp.tapir.swagger.SwaggerUIOptions
@@ -9,6 +12,7 @@ import zio.config.typesafe._
 import zio.http.Server
 
 import feed.listing.delivery.ListingHttpHandler
+import feed.listing.repository.ListingElasticRepository
 import feed.listing.repository.ListingPostgresRepository
 import feed.listing.route.ListingRouteImpl
 import feed.listing.shared.infrastructure.PostgresDataSource
@@ -52,6 +56,22 @@ object Main extends ZIOAppDefault {
       ListingService.layer,
       ListingHttpHandler.layer,
       ListingRouteImpl.layer,
-      RouteAggregatorImpl.layer
+      RouteAggregatorImpl.layer,
+      ListingElasticRepository.layer,
+      ElasticClientLayer.live
     )
+}
+
+object ElasticClientLayer {
+  val live: ZLayer[Any, Throwable, ElasticClient] =
+    ZLayer.scoped {
+      ZIO.acquireRelease {
+        ZIO.attempt {
+          val props = ElasticProperties("http://localhost:9200")
+          ElasticClient(JavaClient(props))
+        }
+      } { client =>
+        ZIO.attempt(client.close()).orDie
+      }
+    }
 }

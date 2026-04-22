@@ -32,6 +32,8 @@ lazy val root = (project in file("."))
       "dev.zio"                     %% "zio-config-typesafe"     % "4.0.7",
       "dev.zio"                     %% "zio-config-magnolia"     % "4.0.7",
       "io.scalaland"                %% "chimney"                 % "1.9.0",
+      "com.sksamuel.elastic4s"      %% "elastic4s-client-esjava" % "8.11.5",
+      "com.sksamuel.elastic4s"      %% "elastic4s-effect-zio"    % "8.11.5"
     ),
     dependencyOverrides ++= Seq("dev.zio" %% "zio-json" % "0.7.44")
   )
