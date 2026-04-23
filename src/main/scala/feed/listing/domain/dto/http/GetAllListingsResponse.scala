@@ -1,12 +1,10 @@
-package feed.listing.domain.dto
+package feed.listing.domain.dto.http
 
 import java.time.Instant
 import java.util.UUID
 
 import sttp.tapir.Schema
 import zio.json._
-
-import feed.listing.domain.types.ListingId
 
 final case class GetAllListingsResponse(listings: List[ListingResponse])
 

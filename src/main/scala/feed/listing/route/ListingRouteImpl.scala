@@ -8,6 +8,10 @@ import zio._
 
 import feed.listing.delivery.ListingHandler
 import feed.listing.domain.dto
+import feed.listing.domain.dto.http.CreateListingRequest
+import feed.listing.domain.dto.http.CreateListingResponse
+import feed.listing.domain.dto.http.GetAllListingsResponse
+import feed.listing.domain.dto.http.ListingResponse
 import feed.listing.domain.types.ListingId
 import feed.listing.shared.apierror.ApiError.errorMapper
 
@@ -23,22 +27,22 @@ final class ListingRouteImpl(listingHandler: ListingHandler) extends ListingRout
       .in("listings")
       .in(query[Option[Instant]]("cursor"))
       .in(query[Option[Int]]("limit"))
-      .out(jsonBody[dto.GetAllListingsResponse])
+      .out(jsonBody[GetAllListingsResponse])
       .errorOut(errorMapper)
       .zServerLogic { case (cursor, limit) => listingHandler.getRecentListings(cursor, limit) }
 
   private val getListing =
     baseEndpoint.get
       .in("listing" / path[ListingId]("listing_id"))
-      .out(jsonBody[dto.ListingResponse])
+      .out(jsonBody[ListingResponse])
       .errorOut(errorMapper)
       .zServerLogic(listingId => listingHandler.getListing(listingId))
 
   private val createListing =
     baseEndpoint.post
       .in("listings")
-      .in(jsonBody[dto.CreateListingRequest])
-      .out(jsonBody[dto.CreateListingResponse])
+      .in(jsonBody[CreateListingRequest])
+      .out(jsonBody[CreateListingResponse])
       .errorOut(errorMapper)
       .zServerLogic(req => listingHandler.createListing(req))
 

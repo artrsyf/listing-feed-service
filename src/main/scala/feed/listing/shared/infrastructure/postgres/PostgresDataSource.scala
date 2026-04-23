@@ -1,4 +1,4 @@
-package feed.listing.shared.infrastructure
+package feed.listing.shared.infrastructure.postgres
 
 import doobie.hikari.HikariTransactor
 import zio._
@@ -8,11 +8,8 @@ object PostgresDataSource {
 
   val layer: ZLayer[Any, Throwable, HikariTransactor[Task]] = ZLayer.scoped {
     for {
-      cfg <- ZIO
-        .config[DbConfig]
-
-      connectEC <-
-        ZIO.executor.map(_.asExecutionContext)
+      cfg       <- ZIO.config[PostgresConfig]
+      connectEC <- ZIO.executor.map(_.asExecutionContext)
 
       xa <-
         HikariTransactor

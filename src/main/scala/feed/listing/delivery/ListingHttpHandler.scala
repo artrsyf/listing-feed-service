@@ -6,10 +6,13 @@ import io.scalaland.chimney.dsl._
 import zio._
 
 import feed.listing.domain.dto
+import feed.listing.domain.dto.http.CreateListingRequest
+import feed.listing.domain.dto.http.CreateListingResponse
+import feed.listing.domain.dto.http.GetAllListingsResponse
+import feed.listing.domain.dto.http.ListingResponse
 import feed.listing.domain.entity
 import feed.listing.domain.types.ListingId
 import feed.listing.shared.apierror.ApiError
-import feed.listing.shared.config.ListingConfig
 import feed.listing.usecase.ListingService
 
 final class ListingHttpHandler(
@@ -19,7 +22,7 @@ final class ListingHttpHandler(
   override def getRecentListings(
     cursor: Option[Instant],
     limit: Option[Int]
-  ): IO[ApiError, dto.GetAllListingsResponse] =
+  ): IO[ApiError, GetAllListingsResponse] =
     listingService
       .getRecentListings(cursor, limit.getOrElse(listingConfig.limit))
       .mapBoth(
@@ -30,18 +33,17 @@ final class ListingHttpHandler(
           case _ => ApiError.Internal.default
         },
         listings =>
-          dto
-            .GetAllListingsResponse(
+          feed.listing.domain.dto.http.GetAllListingsResponse(
               listings
                 .map(
-                  _.into[dto.ListingResponse]
+                  _.into[ListingResponse]
                     .withFieldComputed(_.images, _.images.map(_.url))
                     .transform
                 )
             )
       )
 
-  override def getListing(listingId: ListingId): IO[ApiError, dto.ListingResponse] =
+  override def getListing(listingId: ListingId): IO[ApiError, ListingResponse] =
     listingService
       .getListing(listingId)
       .mapBoth(
@@ -53,13 +55,13 @@ final class ListingHttpHandler(
           case entity.ListingError.Notfound =>
             ApiError.NotFound.listing
         },
-        _.into[dto.ListingResponse]
+        _.into[ListingResponse]
           .withFieldComputed(_.images, _.images.map(_.url))
           .transform
       )
 
-  override def createListing(req: dto.CreateListingRequest)
-    : IO[ApiError, dto.CreateListingResponse] =
+  override def createListing(req: CreateListingRequest)
+    : IO[ApiError, CreateListingResponse] =
     for {
       id  <- ZIO.succeed(java.util.UUID.randomUUID())
       now <- Clock.instant
@@ -83,7 +85,7 @@ final class ListingHttpHandler(
             ApiError.Internal.default
           case _ => ApiError.Internal.default
         }
-    } yield dto.CreateListingResponse(listing.id, listing.createdAt)
+    } yield feed.listing.domain.dto.http.CreateListingResponse(listing.id, listing.createdAt)
 }
 
 object ListingHttpHandler {

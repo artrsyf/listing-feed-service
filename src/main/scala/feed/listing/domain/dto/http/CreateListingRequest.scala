@@ -1,4 +1,4 @@
-package feed.listing.domain.dto
+package feed.listing.domain.dto.http
 
 import sttp.tapir.Schema
 import zio.json._

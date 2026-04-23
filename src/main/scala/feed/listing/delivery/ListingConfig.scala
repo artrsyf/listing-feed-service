@@ -1,4 +1,4 @@
-package feed.listing.shared.config
+package feed.listing.delivery
 
 import zio.Config
 import zio.config.magnolia._

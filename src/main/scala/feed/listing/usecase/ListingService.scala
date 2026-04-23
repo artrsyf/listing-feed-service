@@ -3,44 +3,23 @@ package feed.listing.usecase
 import java.time.Instant
 import java.util.UUID
 
-import io.scalaland.chimney.dsl._
 import zio._
 import zio.stream.ZStream
 
 import feed.listing.domain.entity
 import feed.listing.domain.entity.ListingError
-import feed.listing.domain.model.ElasticListing
-import feed.listing.domain.model.ListingImage
 import feed.listing.domain.types.ListingId
-import feed.listing.repository.ElasticPayload
-import feed.listing.repository.ListingElasticRepository
 import feed.listing.repository.ListingRepository
-import feed.listing.repository.ListingSearchRepository
+import feed.listing.repository.ListingSearchEngine
 
 final class ListingService(
   listingRepo: ListingRepository,
-  listingSearchRepostiory: ListingSearchRepository,
+  listingSearchEngine: ListingSearchEngine,
   listingCreateIndexQueue: AbstractDaemonQueue[entity.Listing])
     extends ZLayer.Derive.Scoped[Any, Nothing] {
   override def scoped(implicit trace: Trace): ZIO[Any & Scope, Nothing, Any] =
     listingCreateIndexQueue.subscribe { listingsChunk =>
-      listingSearchRepostiory
-        .indexBulk(listingsChunk.map { listing =>
-          val elasticListing =
-            listing
-              .into[ElasticListing]
-              .withFieldRenamed(_.status, _.status)
-              .withFieldComputed(
-                _.images,
-                _.images.map(img =>
-                  ListingImage(img.id, listing.id, img.url, img.url, img.position, Instant.now())
-                )
-              )
-              .transform
-
-          ElasticPayload[ElasticListing]("temp_id", 1, elasticListing)
-        })
-        .ignore
+      listingSearchEngine.insertMany(listingsChunk).tapError(e => ZIO.logError(e.msg)).ignore
     }
 
   def getRecentListings(
@@ -68,7 +47,7 @@ object ListingService {
       }
     }
 
-  val layer: RLayer[ListingRepository & ListingSearchRepository, ListingService] =
+  val layer: RLayer[ListingRepository & ListingSearchEngine, ListingService] =
     ZLayer.derive[ListingService]
 }
 
