@@ -14,6 +14,7 @@ import feed.listing.infrastructure.repository.elastic.ListingElasticSearchEngine
 import feed.listing.infrastructure.repository.postgres.ListingPostgresRepository
 import feed.listing.infrastructure.repository.postgres.PostgresDataSource
 import feed.listing.route.ListingRouteImpl
+import feed.listing.shared.collections.EventQueue
 import feed.listing.usecase.ListingService
 
 object Main extends ZIOAppDefault {
@@ -56,6 +57,7 @@ object Main extends ZIOAppDefault {
       ListingRouteImpl.layer,
       RouteAggregatorImpl.layer,
       ListingElasticSearchEngine.layer,
-      ElasticClient.live
+      ElasticClient.live,
+      EventQueue.chunkedListingEventQueueLayer
     )
 }
