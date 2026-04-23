@@ -1,4 +1,4 @@
-package feed.listing.domain.model
+package feed.listing.domain.model.elastic
 
 import java.time.Instant
 
@@ -16,7 +16,7 @@ case class ElasticListing(
   price: BigDecimal,
   currency: String,
   status: ElasticListingStatus,
-  images: List[ListingImage],
+  images: List[ElasticListingImage],
   createdAt: Instant,
   updatedAt: Instant)
 

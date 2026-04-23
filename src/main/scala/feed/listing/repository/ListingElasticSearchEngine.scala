@@ -14,8 +14,8 @@ import zio._
 import feed.listing.domain.dto.elastic.ElasticPayload
 import feed.listing.domain.entity.Listing
 import feed.listing.domain.entity.ListingError.PersistenceLayerError
-import feed.listing.domain.model.ElasticListing
-import feed.listing.domain.model.ListingImage
+import feed.listing.domain.model.elastic.ElasticListing
+import feed.listing.domain.model.elastic.ElasticListingImage
 import feed.listing.shared.infrastructure.elastic.ElasticConfig
 
 final class ListingElasticSearchEngine(
@@ -31,7 +31,7 @@ final class ListingElasticSearchEngine(
           .withFieldComputed(
             _.images,
             _.images.map(img =>
-              ListingImage(img.id, listing.id, img.url, img.url, img.position, Instant.now())
+              ElasticListingImage(img.id, listing.id, img.url, img.url, img.position, Instant.now())
             )
           )
           .transform
@@ -70,7 +70,6 @@ final class ListingElasticSearchEngine(
 }
 
 object ListingElasticSearchEngine {
-  // TODO: Посмотреть почему derive не вывозит
   val layer: RLayer[ElasticClient, ListingElasticSearchEngine] =
     ZLayer.derive[ListingElasticSearchEngine]
 }

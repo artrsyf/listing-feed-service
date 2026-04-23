@@ -1,4 +1,4 @@
-package feed.listing.domain.model
+package feed.listing.domain.model.elastic
 
 import java.time.Instant
 import java.util.UUID
@@ -8,7 +8,7 @@ import zio.json.JsonCodec
 
 import feed.listing.domain.types.ListingId
 
-final case class ListingImage(
+final case class ElasticListingImage(
   id: UUID,
   listingId: ListingId,
   url: String,
@@ -16,6 +16,6 @@ final case class ListingImage(
   position: Int,
   createdAt: Instant)
 
-object ListingImage {
-  implicit val jsonCodec: JsonCodec[ListingImage] = DeriveJsonCodec.gen[ListingImage]
+object ElasticListingImage {
+  implicit val jsonCodec: JsonCodec[ElasticListingImage] = DeriveJsonCodec.gen[ElasticListingImage]
 }

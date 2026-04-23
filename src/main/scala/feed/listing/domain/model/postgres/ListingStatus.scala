@@ -1,11 +1,15 @@
-package feed.listing.domain.model
+package feed.listing.domain.model.postgres
 
 import doobie.util.meta.Meta
 
-import feed.listing.domain.entity.ListingStatus
-import feed.listing.domain.entity.ListingStatus._
+sealed trait ListingStatus extends Product with Serializable
 
-object ListingStatusDoobieImplicits {
+object ListingStatus {
+  case object Active  extends ListingStatus
+  case object Sold    extends ListingStatus
+  case object Draft   extends ListingStatus
+  case object Deleted extends ListingStatus
+
   def fromString(s: String): ListingStatus = s match {
     case "ACTIVE"  => Active
     case "SOLD"    => Sold

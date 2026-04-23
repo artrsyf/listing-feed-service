@@ -5,7 +5,6 @@ import java.time.Instant
 import io.scalaland.chimney.dsl._
 import zio._
 
-import feed.listing.domain.dto
 import feed.listing.domain.dto.http.CreateListingRequest
 import feed.listing.domain.dto.http.CreateListingResponse
 import feed.listing.domain.dto.http.GetAllListingsResponse
@@ -34,13 +33,13 @@ final class ListingHttpHandler(
         },
         listings =>
           feed.listing.domain.dto.http.GetAllListingsResponse(
-              listings
-                .map(
-                  _.into[ListingResponse]
-                    .withFieldComputed(_.images, _.images.map(_.url))
-                    .transform
-                )
-            )
+            listings
+              .map(
+                _.into[ListingResponse]
+                  .withFieldComputed(_.images, _.images.map(_.url))
+                  .transform
+              )
+          )
       )
 
   override def getListing(listingId: ListingId): IO[ApiError, ListingResponse] =
@@ -60,8 +59,7 @@ final class ListingHttpHandler(
           .transform
       )
 
-  override def createListing(req: CreateListingRequest)
-    : IO[ApiError, CreateListingResponse] =
+  override def createListing(req: CreateListingRequest): IO[ApiError, CreateListingResponse] =
     for {
       id  <- ZIO.succeed(java.util.UUID.randomUUID())
       now <- Clock.instant

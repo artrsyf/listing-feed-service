@@ -12,8 +12,8 @@ import zio.interop.catz._
 
 import feed.listing.domain.entity
 import feed.listing.domain.entity.ListingError.PersistenceLayerError
-import feed.listing.domain.model
-import feed.listing.domain.model.ListingStatusDoobieImplicits._
+import feed.listing.domain.model.postgres
+import feed.listing.domain.model.postgres.ListingImage
 import feed.listing.domain.types.ListingId
 
 class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository {
@@ -43,7 +43,7 @@ class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository 
 
     (for {
       listings <- req
-        .query[model.Listing]
+        .query[postgres.Listing]
         .to[List]
         .transact(xa)
 
@@ -56,7 +56,7 @@ class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository 
           description = l.description,
           price = l.price,
           currency = l.currency,
-          status = l.status,
+          status = l.status.transformInto[entity.ListingStatus],
           images = images.map(_.transformInto[entity.ListingImage]),
           createdAt = l.createdAt,
           updatedAt = l.updatedAt
@@ -73,7 +73,7 @@ class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository 
         WHERE id = $listingId
         LIMIT 1
       """
-        .query[model.Listing]
+        .query[postgres.Listing]
         .option
         .transact(xa)
       images <- getListingImages(listingId)
@@ -84,7 +84,7 @@ class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository 
           description = l.description,
           price = l.price,
           currency = l.currency,
-          status = l.status,
+          status = l.status.transformInto[entity.ListingStatus],
           images = images.map(_.transformInto[entity.ListingImage]),
           createdAt = l.createdAt,
           updatedAt = l.updatedAt
@@ -110,21 +110,24 @@ class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository 
         WHERE listing_id = $listingId
         ORDER BY position ASC
       """
-    .query[model.ListingImage]
+    .query[ListingImage]
     .to[List]
     .transact(xa)
 
   // TODO: Починить костыль с енамом
-  private def insertListing(listing: entity.Listing): ConnectionIO[Int] =
+  private def insertListing(listing: entity.Listing): ConnectionIO[Int] = {
+    val listingModel = listing.transformInto[postgres.Listing]
+
     sql"""
       INSERT INTO listings (
         id, title, description, price, currency, status, created_at, updated_at
       )
       VALUES (
-        ${listing.id}, ${listing.title}, ${listing.description}, ${listing.price},
-        ${listing.currency}, ${listing.status}::listing_status, ${listing.createdAt}, ${listing.updatedAt}
+        ${listingModel.id}, ${listingModel.title}, ${listingModel.description}, ${listingModel.price},
+        ${listingModel.currency}, ${listingModel.status}::listing_status, ${listingModel.createdAt}, ${listingModel.updatedAt}
       )
     """.update.run
+  }
 
   private def insertImages(
     listingId: ListingId,
@@ -132,7 +135,7 @@ class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository 
     images: List[entity.ListingImage]
   ): ConnectionIO[Int] = {
     val modelImages = images.map { img =>
-      model.ListingImage(
+      feed.listing.domain.model.postgres.ListingImage(
         id = img.id,
         listingId = listingId,
         url = img.url,
@@ -142,7 +145,7 @@ class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository 
       )
     }
 
-    Update[model.ListingImage]("""
+    Update[ListingImage]("""
       INSERT INTO listing_images (
         id, listing_id, url, key, position, created_at
       ) VALUES (?, ?, ?, ?, ?, ?)

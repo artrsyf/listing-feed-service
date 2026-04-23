@@ -1,8 +1,7 @@
-package feed.listing.domain.model
+package feed.listing.domain.model.postgres
 
 import java.time.Instant
 
-import feed.listing.domain.entity.ListingStatus
 import feed.listing.domain.types.ListingId
 
 final case class Listing(

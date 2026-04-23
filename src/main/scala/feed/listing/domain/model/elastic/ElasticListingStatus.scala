@@ -1,19 +1,10 @@
-package feed.listing.domain.model
+package feed.listing.domain.model.elastic
 
 import enumeratum.Enum
 import enumeratum.EnumEntry
 import enumeratum.EnumEntry.Lowercase
-import zio.json.JsonCodec
-import zio.json.JsonDecoder
-import zio.json.JsonEncoder
 
-// TODO: Вынести в shared часть
-trait ZioJsonEnum[A <: EnumEntry] { self: Enum[A] =>
-  implicit val jsonCodec: JsonCodec[A] = JsonCodec.fromEncoderDecoder(
-    JsonEncoder.string.contramap(_.entryName),
-    JsonDecoder.string.mapOrFail(self.withNameEither(_).left.map(_.getMessage()))
-  )
-}
+import feed.listing.shared.instances.ZioJsonEnum
 
 sealed trait ElasticListingStatus extends EnumEntry with Lowercase with Product with Serializable
 
