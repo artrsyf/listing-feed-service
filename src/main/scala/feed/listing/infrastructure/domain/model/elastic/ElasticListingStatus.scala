@@ -1,4 +1,4 @@
-package feed.listing.domain.model.elastic
+package feed.listing.infrastructure.domain.model.elastic
 
 import enumeratum.Enum
 import enumeratum.EnumEntry

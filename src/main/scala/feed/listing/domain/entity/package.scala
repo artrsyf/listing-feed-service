@@ -2,6 +2,6 @@ package feed.listing.domain
 
 import java.util.UUID
 
-package object types {
+package object entity {
   type ListingId = UUID
 }

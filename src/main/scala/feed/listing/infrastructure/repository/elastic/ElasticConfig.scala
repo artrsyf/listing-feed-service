@@ -1,4 +1,4 @@
-package feed.listing.shared.infrastructure.elastic
+package feed.listing.infrastructure.repository.elastic
 
 import zio.Config
 import zio.config.magnolia.deriveConfig

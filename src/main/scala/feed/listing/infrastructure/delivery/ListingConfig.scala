@@ -1,4 +1,4 @@
-package feed.listing.delivery
+package feed.listing.infrastructure.delivery
 
 import zio.Config
 import zio.config.magnolia._

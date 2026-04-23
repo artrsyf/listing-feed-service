@@ -8,12 +8,12 @@ import zio._
 import zio.config.typesafe._
 import zio.http.Server
 
-import feed.listing.delivery.ListingHttpHandler
-import feed.listing.repository.ListingElasticSearchEngine
-import feed.listing.repository.ListingPostgresRepository
+import feed.listing.infrastructure.delivery.ListingHttpHandler
+import feed.listing.infrastructure.repository.elastic.ElasticClient
+import feed.listing.infrastructure.repository.elastic.ListingElasticSearchEngine
+import feed.listing.infrastructure.repository.postgres.ListingPostgresRepository
+import feed.listing.infrastructure.repository.postgres.PostgresDataSource
 import feed.listing.route.ListingRouteImpl
-import feed.listing.shared.infrastructure.elastic.ElasticClient
-import feed.listing.shared.infrastructure.postgres.PostgresDataSource
 import feed.listing.usecase.ListingService
 
 object Main extends ZIOAppDefault {

@@ -6,7 +6,7 @@ import zio._
 
 import feed.listing.domain.entity
 import feed.listing.domain.entity.ListingError.PersistenceLayerError
-import feed.listing.domain.types.ListingId
+import feed.listing.domain.entity.ListingId
 
 trait ListingRepository {
   def getRecentListings(

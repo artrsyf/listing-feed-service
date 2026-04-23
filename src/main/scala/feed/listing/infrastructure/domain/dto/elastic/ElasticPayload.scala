@@ -1,4 +1,4 @@
-package feed.listing.domain.dto.elastic
+package feed.listing.infrastructure.domain.dto.elastic
 
 import com.sksamuel.elastic4s.ElasticApi.indexInto
 import com.sksamuel.elastic4s.Indexable

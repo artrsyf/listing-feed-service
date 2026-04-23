@@ -1,4 +1,4 @@
-package feed.listing.domain.model.postgres
+package feed.listing.infrastructure.domain.model.postgres
 
 import enumeratum.EnumEntry.Uppercase
 import enumeratum._

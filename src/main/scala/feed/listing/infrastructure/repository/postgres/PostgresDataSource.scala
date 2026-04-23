@@ -1,4 +1,4 @@
-package feed.listing.shared.infrastructure.postgres
+package feed.listing.infrastructure.repository.postgres
 
 import doobie.hikari.HikariTransactor
 import zio._

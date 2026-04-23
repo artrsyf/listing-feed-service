@@ -1,4 +1,4 @@
-package feed.listing.domain.model.elastic
+package feed.listing.infrastructure.domain.model.elastic
 
 import java.time.Instant
 
@@ -7,7 +7,7 @@ import zio.json.DeriveJsonCodec
 import zio.json.EncoderOps
 import zio.json.JsonCodec
 
-import feed.listing.domain.types.ListingId
+import feed.listing.domain.entity.ListingId
 
 case class ElasticListing(
   id: ListingId,

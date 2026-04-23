@@ -4,12 +4,11 @@ import java.time.Instant
 
 import zio._
 
-import feed.listing.domain.dto
 import feed.listing.domain.dto.http.CreateListingRequest
 import feed.listing.domain.dto.http.CreateListingResponse
 import feed.listing.domain.dto.http.GetAllListingsResponse
 import feed.listing.domain.dto.http.ListingResponse
-import feed.listing.domain.types.ListingId
+import feed.listing.domain.entity.ListingId
 import feed.listing.shared.apierror.ApiError
 
 trait ListingHandler {

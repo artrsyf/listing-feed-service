@@ -1,4 +1,4 @@
-package feed.listing.shared.infrastructure.elastic
+package feed.listing.infrastructure.repository.elastic
 
 import com.sksamuel.elastic4s.ElasticProperties
 import com.sksamuel.elastic4s.http.JavaClient

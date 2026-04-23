@@ -8,7 +8,7 @@ import zio.stream.ZStream
 
 import feed.listing.domain.entity
 import feed.listing.domain.entity.ListingError
-import feed.listing.domain.types.ListingId
+import feed.listing.domain.entity.ListingId
 import feed.listing.repository.ListingRepository
 import feed.listing.repository.ListingSearchEngine
 

@@ -1,4 +1,4 @@
-package feed.listing.repository
+package feed.listing.infrastructure.repository.postgres
 
 import java.time.Instant
 
@@ -12,10 +12,11 @@ import zio.interop.catz._
 
 import feed.listing.domain.entity
 import feed.listing.domain.entity.ListingError.PersistenceLayerError
-import feed.listing.domain.model.postgres
-import feed.listing.domain.model.postgres.ListingImage
-import feed.listing.domain.model.postgres.ListingStatus._
-import feed.listing.domain.types.ListingId
+import feed.listing.domain.entity.ListingId
+import feed.listing.infrastructure.domain.model.postgres
+import feed.listing.infrastructure.domain.model.postgres.Listing
+import feed.listing.infrastructure.domain.model.postgres.ListingImage
+import feed.listing.repository.ListingRepository
 
 class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository {
   override def getRecentListings(
@@ -44,7 +45,7 @@ class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository 
 
     (for {
       listings <- req
-        .query[postgres.Listing]
+        .query[Listing]
         .to[List]
         .transact(xa)
 
@@ -74,7 +75,7 @@ class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository 
         WHERE id = $listingId
         LIMIT 1
       """
-        .query[postgres.Listing]
+        .query[Listing]
         .option
         .transact(xa)
       images <- getListingImages(listingId)
@@ -116,7 +117,7 @@ class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository 
     .transact(xa)
 
   private def insertListing(listing: entity.Listing): ConnectionIO[Int] = {
-    val listingModel = listing.transformInto[postgres.Listing]
+    val listingModel = listing.transformInto[Listing]
 
     sql"""
       INSERT INTO listings (
@@ -135,7 +136,7 @@ class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository 
     images: List[entity.ListingImage]
   ): ConnectionIO[Int] = {
     val modelImages = images.map { img =>
-      feed.listing.domain.model.postgres.ListingImage(
+      postgres.ListingImage(
         id = img.id,
         listingId = listingId,
         url = img.url,

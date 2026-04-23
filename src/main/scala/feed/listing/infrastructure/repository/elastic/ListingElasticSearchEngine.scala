@@ -1,4 +1,4 @@
-package feed.listing.repository
+package feed.listing.infrastructure.repository.elastic
 
 import java.time.Instant
 
@@ -11,12 +11,12 @@ import com.sksamuel.elastic4s.zio.instances._
 import io.scalaland.chimney.dsl._
 import zio._
 
-import feed.listing.domain.dto.elastic.ElasticPayload
 import feed.listing.domain.entity.Listing
 import feed.listing.domain.entity.ListingError.PersistenceLayerError
-import feed.listing.domain.model.elastic.ElasticListing
-import feed.listing.domain.model.elastic.ElasticListingImage
-import feed.listing.shared.infrastructure.elastic.ElasticConfig
+import feed.listing.infrastructure.domain.dto.elastic.ElasticPayload
+import feed.listing.infrastructure.domain.model.elastic.ElasticListing
+import feed.listing.infrastructure.domain.model.elastic.ElasticListingImage
+import feed.listing.repository.ListingSearchEngine
 
 final class ListingElasticSearchEngine(
   listingSearchConfig: ElasticConfig,

@@ -1,4 +1,4 @@
-package feed.listing.shared.infrastructure.postgres
+package feed.listing.infrastructure.repository.postgres
 
 import zio.Config
 import zio.config.magnolia._
