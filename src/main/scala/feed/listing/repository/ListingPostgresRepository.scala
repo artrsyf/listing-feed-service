@@ -14,6 +14,7 @@ import feed.listing.domain.entity
 import feed.listing.domain.entity.ListingError.PersistenceLayerError
 import feed.listing.domain.model.postgres
 import feed.listing.domain.model.postgres.ListingImage
+import feed.listing.domain.model.postgres.ListingStatus._
 import feed.listing.domain.types.ListingId
 
 class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository {
@@ -114,7 +115,6 @@ class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository 
     .to[List]
     .transact(xa)
 
-  // TODO: Починить костыль с енамом
   private def insertListing(listing: entity.Listing): ConnectionIO[Int] = {
     val listingModel = listing.transformInto[postgres.Listing]
 

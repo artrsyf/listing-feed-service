@@ -1,29 +1,15 @@
 package feed.listing.domain.model.postgres
 
-import doobie.util.meta.Meta
+import enumeratum.EnumEntry.Uppercase
+import enumeratum._
 
-sealed trait ListingStatus extends Product with Serializable
+sealed trait ListingStatus extends Product with Serializable with EnumEntry with Uppercase
 
-object ListingStatus {
+object ListingStatus extends Enum[ListingStatus] with DoobieEnum[ListingStatus] {
   case object Active  extends ListingStatus
   case object Sold    extends ListingStatus
   case object Draft   extends ListingStatus
   case object Deleted extends ListingStatus
 
-  def fromString(s: String): ListingStatus = s match {
-    case "ACTIVE"  => Active
-    case "SOLD"    => Sold
-    case "DRAFT"   => Draft
-    case "DELETED" => Deleted
-  }
-
-  def toString(s: ListingStatus): String = s match {
-    case Active  => "ACTIVE"
-    case Sold    => "SOLD"
-    case Draft   => "DRAFT"
-    case Deleted => "DELETED"
-  }
-
-  implicit val meta: Meta[ListingStatus] =
-    Meta[String].timap(fromString)(toString)
+  val values: IndexedSeq[ListingStatus] = findValues
 }
