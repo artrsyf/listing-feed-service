@@ -20,8 +20,8 @@ import feed.listing.infrastructure.domain.model.postgres.ListingImage
 
 class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository {
   override def getRecentListings(
-    cursor: Option[Instant],
-    limit: Int
+      cursor: Option[Instant],
+      limit: Int
   ): IO[PersistenceLayerError, List[entity.Listing]] = {
     val req = cursor match {
       case Some(c) =>
@@ -131,9 +131,9 @@ class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository 
   }
 
   private def insertImages(
-    listingId: ListingId,
-    createdAt: Instant,
-    images: List[entity.ListingImage]
+      listingId: ListingId,
+      createdAt: Instant,
+      images: List[entity.ListingImage]
   ): ConnectionIO[Int] = {
     val modelImages = images.map { img =>
       postgres.ListingImage(

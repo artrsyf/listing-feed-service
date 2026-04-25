@@ -10,15 +10,16 @@ import zio.json.JsonCodec
 import feed.listing.core.entity.ListingId
 
 case class ElasticListing(
-  id: ListingId,
-  title: String,
-  description: String,
-  price: BigDecimal,
-  currency: String,
-  status: ElasticListingStatus,
-  images: List[ElasticListingImage],
-  createdAt: Instant,
-  updatedAt: Instant)
+    id: ListingId,
+    title: String,
+    description: String,
+    price: BigDecimal,
+    currency: String,
+    status: ElasticListingStatus,
+    images: List[ElasticListingImage],
+    createdAt: Instant,
+    updatedAt: Instant
+)
 
 object ElasticListing {
   implicit val jsonCodec: JsonCodec[ElasticListing] = DeriveJsonCodec.gen[ElasticListing]

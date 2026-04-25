@@ -16,13 +16,14 @@ object GetAllListingsResponse {
 }
 
 final case class ListingResponse(
-  id: UUID,
-  title: String,
-  description: String,
-  price: BigDecimal,
-  currency: String,
-  images: List[String],
-  createdAt: Instant)
+    id: UUID,
+    title: String,
+    description: String,
+    price: BigDecimal,
+    currency: String,
+    images: List[String],
+    createdAt: Instant
+)
 
 object ListingResponse {
   implicit val codec: JsonCodec[ListingResponse] = DeriveJsonCodec

@@ -18,21 +18,17 @@ object EventQueue {
     }
 
   abstract class EventQueueWithSubscribersRef[A](
-    val subscribersRef: Ref[Chunk[Chunk[A] => UIO[Unit]]])
-      extends EventQueue[A] {
+      val subscribersRef: Ref[Chunk[Chunk[A] => UIO[Unit]]]
+  ) extends EventQueue[A] {
     override def subscribe(f: Chunk[A] => UIO[Unit]): UIO[Unit] =
       subscribersRef.update(_ :+ f)
 
     def push(record: A): UIO[Unit]
   }
 
-  def makeChunked[A](
-    chunkSize: Int,
-    withinDuration: Duration,
-    shutdownTimeout: Duration
-  ) =
+  def makeChunked[A](chunkSize: Int, withinDuration: Duration, shutdownTimeout: Duration) =
     for {
-      queue               <- Queue.bounded[Option[A]](chunkSize)
+      queue <- Queue.bounded[Option[A]](chunkSize)
       emptySubscribersRef <- Ref.make(Chunk.empty[Chunk[A] => UIO[Unit]])
       searchEngineQueue = new EventQueueWithSubscribersRef[A](emptySubscribersRef) {
         override def push(record: A): UIO[Unit] =

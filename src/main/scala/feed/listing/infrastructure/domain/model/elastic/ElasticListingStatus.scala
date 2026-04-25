@@ -13,8 +13,8 @@ object ElasticListingStatus
     with ZioJsonEnum[ElasticListingStatus] {
   override val values: IndexedSeq[ElasticListingStatus] = findValues
 
-  case object Active  extends ElasticListingStatus
-  case object Sold    extends ElasticListingStatus
-  case object Draft   extends ElasticListingStatus
+  case object Active extends ElasticListingStatus
+  case object Sold extends ElasticListingStatus
+  case object Draft extends ElasticListingStatus
   case object Deleted extends ElasticListingStatus
 }

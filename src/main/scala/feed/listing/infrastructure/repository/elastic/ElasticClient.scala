@@ -11,7 +11,7 @@ object ElasticClient {
     ZLayer.scoped {
       ZIO.acquireRelease {
         for {
-          config        <- ZIO.config[ElasticConfig]
+          config <- ZIO.config[ElasticConfig]
           elasticClient <- ZIO.attempt {
             val props = ElasticProperties(config.url)
             ElasticClient4s(JavaClient(props))

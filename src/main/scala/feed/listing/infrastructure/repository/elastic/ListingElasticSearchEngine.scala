@@ -19,9 +19,9 @@ import feed.listing.infrastructure.domain.model.elastic.ElasticListing
 import feed.listing.infrastructure.domain.model.elastic.ElasticListingImage
 
 final class ListingElasticSearchEngine(
-  listingSearchConfig: ElasticConfig,
-  elasticClient: ElasticClient)
-    extends ListingSearchEngine {
+    listingSearchConfig: ElasticConfig,
+    elasticClient: ElasticClient
+) extends ListingSearchEngine {
   override def insertMany(listings: Chunk[Listing]): IO[PersistenceLayerError, Unit] =
     indexBulk(listings.map { listing =>
       val elasticListing =
@@ -40,9 +40,9 @@ final class ListingElasticSearchEngine(
     }).mapError(e => PersistenceLayerError(e.getMessage))
 
   private def createIndexIfNotExists(
-    fields: Seq[ElasticField],
-    analysis: Option[Analysis],
-    shards: Option[Int] = None
+      fields: Seq[ElasticField],
+      analysis: Option[Analysis],
+      shards: Option[Int] = None
   ) =
     for {
       indexExistsResponse <- elasticClient.execute {

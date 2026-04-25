@@ -8,7 +8,7 @@ object PostgresDataSource {
 
   val layer: ZLayer[Any, Throwable, HikariTransactor[Task]] = ZLayer.scoped {
     for {
-      cfg       <- ZIO.config[PostgresConfig]
+      cfg <- ZIO.config[PostgresConfig]
       connectEC <- ZIO.executor.map(_.asExecutionContext)
 
       xa <-

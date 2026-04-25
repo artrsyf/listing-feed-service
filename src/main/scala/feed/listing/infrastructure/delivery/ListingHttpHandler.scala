@@ -14,13 +14,11 @@ import feed.listing.infrastructure.domain.dto.http.GetAllListingsResponse
 import feed.listing.infrastructure.domain.dto.http.ListingResponse
 import feed.shared.apierror.ApiError
 
-final class ListingHttpHandler(
-  listingService: ListingService,
-  listingConfig: ListingConfig)
+final class ListingHttpHandler(listingService: ListingService, listingConfig: ListingConfig)
     extends ListingHandler {
   override def getRecentListings(
-    cursor: Option[Instant],
-    limit: Option[Int]
+      cursor: Option[Instant],
+      limit: Option[Int]
   ): IO[ApiError, GetAllListingsResponse] =
     listingService
       .getRecentListings(cursor, limit.getOrElse(listingConfig.limit))
@@ -61,7 +59,7 @@ final class ListingHttpHandler(
 
   override def createListing(req: CreateListingRequest): IO[ApiError, CreateListingResponse] =
     for {
-      id  <- ZIO.succeed(java.util.UUID.randomUUID())
+      id <- ZIO.succeed(java.util.UUID.randomUUID())
       now <- Clock.instant
       listing = entity.Listing(
         id = id,

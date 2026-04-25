@@ -13,8 +13,8 @@ import feed.shared.apierror.ApiError
 
 trait ListingHandler {
   def getRecentListings(
-    cursor: Option[Instant],
-    limit: Option[Int]
+      cursor: Option[Instant],
+      limit: Option[Int]
   ): IO[ApiError, GetAllListingsResponse]
   def getListing(listingId: ListingId): IO[ApiError, ListingResponse]
   def createListing(req: CreateListingRequest): IO[ApiError, CreateListingResponse]

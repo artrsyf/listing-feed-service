@@ -10,18 +10,18 @@ import feed.listing.core.entity.ListingId
 import feed.shared.collections.EventQueue
 
 final class ListingService(
-  listingRepo: ListingRepository,
-  listingSearchEngine: ListingSearchEngine,
-  listingCreateIndexQueue: EventQueue[entity.Listing])
-    extends ZLayer.Derive.Scoped[Any, Nothing] {
+    listingRepo: ListingRepository,
+    listingSearchEngine: ListingSearchEngine,
+    listingCreateIndexQueue: EventQueue[entity.Listing]
+) extends ZLayer.Derive.Scoped[Any, Nothing] {
   override def scoped(implicit trace: Trace): ZIO[Any & Scope, Nothing, Any] =
     listingCreateIndexQueue.subscribe { listingsChunk =>
       listingSearchEngine.insertMany(listingsChunk).tapError(e => ZIO.logError(e.msg)).ignore
     }
 
   def getRecentListings(
-    cursor: Option[Instant],
-    limit: Int
+      cursor: Option[Instant],
+      limit: Int
   ): IO[ListingError, List[entity.Listing]] =
     listingRepo.getRecentListings(cursor, limit)
 
@@ -36,7 +36,8 @@ final class ListingService(
 }
 
 object ListingService {
-  val layer
-    : RLayer[ListingRepository & ListingSearchEngine & EventQueue[entity.Listing], ListingService] =
+  val layer: RLayer[ListingRepository & ListingSearchEngine & EventQueue[
+    entity.Listing
+  ], ListingService] =
     ZLayer.derive[ListingService]
 }
