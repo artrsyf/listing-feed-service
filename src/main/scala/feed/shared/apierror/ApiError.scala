@@ -1,4 +1,4 @@
-package feed.listing.shared.apierror
+package feed.shared.apierror
 
 import sttp.model.StatusCode
 import sttp.tapir._

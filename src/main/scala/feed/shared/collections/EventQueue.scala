@@ -1,9 +1,9 @@
-package feed.listing.shared.collections
+package feed.shared.collections
 
 import zio._
 import zio.stream.ZStream
 
-import feed.listing.domain.entity
+import feed.listing.core.entity.Listing
 
 trait EventQueue[A] {
   def subscribe(f: Chunk[A] => UIO[Unit]): UIO[Unit]
@@ -12,10 +12,9 @@ trait EventQueue[A] {
 }
 
 object EventQueue {
-  implicit val chunkedListingEventQueueLayer
-    : ZLayer[Any, Config.Error, EventQueue[entity.Listing]] =
+  implicit val chunkedListingEventQueueLayer: ZLayer[Any, Config.Error, EventQueue[Listing]] =
     ZLayer.scoped {
-      EventQueue.makeChunked[entity.Listing](100, 1.second, 10.seconds)
+      EventQueue.makeChunked[Listing](100, 1.second, 10.seconds)
     }
 
   abstract class EventQueueWithSubscribersRef[A](

@@ -1,4 +1,4 @@
-package feed.listing.route
+package feed.listing.infrastructure.route
 
 import sttp.tapir.ztapir.ZServerEndpoint
 import zio.Chunk

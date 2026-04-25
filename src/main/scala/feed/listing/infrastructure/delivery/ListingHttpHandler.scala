@@ -5,15 +5,14 @@ import java.time.Instant
 import io.scalaland.chimney.dsl._
 import zio._
 
-import feed.listing.delivery.ListingHandler
-import feed.listing.domain.dto.http.CreateListingRequest
-import feed.listing.domain.dto.http.CreateListingResponse
-import feed.listing.domain.dto.http.GetAllListingsResponse
-import feed.listing.domain.dto.http.ListingResponse
-import feed.listing.domain.entity
-import feed.listing.domain.entity.ListingId
-import feed.listing.shared.apierror.ApiError
-import feed.listing.usecase.ListingService
+import feed.listing.core.ListingService
+import feed.listing.core.entity
+import feed.listing.core.entity.ListingId
+import feed.listing.infrastructure.domain.dto.http.CreateListingRequest
+import feed.listing.infrastructure.domain.dto.http.CreateListingResponse
+import feed.listing.infrastructure.domain.dto.http.GetAllListingsResponse
+import feed.listing.infrastructure.domain.dto.http.ListingResponse
+import feed.shared.apierror.ApiError
 
 final class ListingHttpHandler(
   listingService: ListingService,
@@ -33,7 +32,7 @@ final class ListingHttpHandler(
           case _ => ApiError.Internal.default
         },
         listings =>
-          feed.listing.domain.dto.http.GetAllListingsResponse(
+          feed.listing.infrastructure.domain.dto.http.GetAllListingsResponse(
             listings
               .map(
                 _.into[ListingResponse]
@@ -84,7 +83,8 @@ final class ListingHttpHandler(
             ApiError.Internal.default
           case _ => ApiError.Internal.default
         }
-    } yield feed.listing.domain.dto.http.CreateListingResponse(listing.id, listing.createdAt)
+    } yield feed.listing.infrastructure.domain.dto.http
+      .CreateListingResponse(listing.id, listing.createdAt)
 }
 
 object ListingHttpHandler {

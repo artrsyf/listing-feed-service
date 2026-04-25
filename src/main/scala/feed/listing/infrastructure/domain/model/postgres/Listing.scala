@@ -2,7 +2,7 @@ package feed.listing.infrastructure.domain.model.postgres
 
 import java.time.Instant
 
-import feed.listing.domain.entity.ListingId
+import feed.listing.core.entity.ListingId
 
 final case class Listing(
   id: ListingId,

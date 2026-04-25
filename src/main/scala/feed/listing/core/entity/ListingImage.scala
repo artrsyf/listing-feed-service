@@ -1,4 +1,4 @@
-package feed.listing.domain.entity
+package feed.listing.core.entity
 
 import java.util.UUID
 

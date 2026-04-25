@@ -1,4 +1,4 @@
-package feed.listing.route
+package feed.listing.infrastructure.route
 
 import java.time.Instant
 
@@ -6,14 +6,13 @@ import sttp.tapir.json.zio._
 import sttp.tapir.ztapir._
 import zio._
 
-import feed.listing.delivery.ListingHandler
-import feed.listing.domain.dto
-import feed.listing.domain.dto.http.CreateListingRequest
-import feed.listing.domain.dto.http.CreateListingResponse
-import feed.listing.domain.dto.http.GetAllListingsResponse
-import feed.listing.domain.dto.http.ListingResponse
-import feed.listing.domain.entity.ListingId
-import feed.listing.shared.apierror.ApiError.errorMapper
+import feed.listing.core.entity.ListingId
+import feed.listing.infrastructure.delivery.ListingHandler
+import feed.listing.infrastructure.domain.dto.http.CreateListingRequest
+import feed.listing.infrastructure.domain.dto.http.CreateListingResponse
+import feed.listing.infrastructure.domain.dto.http.GetAllListingsResponse
+import feed.listing.infrastructure.domain.dto.http.ListingResponse
+import feed.shared.apierror.ApiError.errorMapper
 
 final class ListingRouteImpl(listingHandler: ListingHandler) extends ListingRoute {
 

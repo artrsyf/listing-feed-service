@@ -7,7 +7,7 @@ import zio.json.DeriveJsonCodec
 import zio.json.EncoderOps
 import zio.json.JsonCodec
 
-import feed.listing.domain.entity.ListingId
+import feed.listing.core.entity.ListingId
 
 case class ElasticListing(
   id: ListingId,

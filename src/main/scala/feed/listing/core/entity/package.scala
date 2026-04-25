@@ -1,4 +1,4 @@
-package feed.listing.domain
+package feed.listing.core
 
 import java.util.UUID
 

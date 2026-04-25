@@ -1,4 +1,4 @@
-package feed.listing.domain.entity
+package feed.listing.core.entity
 
 sealed trait ListingStatus extends Product with Serializable
 

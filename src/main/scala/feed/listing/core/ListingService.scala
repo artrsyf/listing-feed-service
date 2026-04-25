@@ -1,16 +1,13 @@
-package feed.listing.usecase
+package feed.listing.core
 
 import java.time.Instant
 import java.util.UUID
 
 import zio._
 
-import feed.listing.domain.entity
-import feed.listing.domain.entity.ListingError
-import feed.listing.domain.entity.ListingId
-import feed.listing.repository.ListingRepository
-import feed.listing.repository.ListingSearchEngine
-import feed.listing.shared.collections.EventQueue
+import feed.listing.core.entity.ListingError
+import feed.listing.core.entity.ListingId
+import feed.shared.collections.EventQueue
 
 final class ListingService(
   listingRepo: ListingRepository,

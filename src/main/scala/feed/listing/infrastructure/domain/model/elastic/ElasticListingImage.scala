@@ -6,7 +6,7 @@ import java.util.UUID
 import zio.json.DeriveJsonCodec
 import zio.json.JsonCodec
 
-import feed.listing.domain.entity.ListingId
+import feed.listing.core.entity.ListingId
 
 final case class ElasticListingImage(
   id: UUID,

@@ -1,12 +1,11 @@
-package feed.listing.repository
+package feed.listing.core
 
 import java.time.Instant
 
 import zio._
 
-import feed.listing.domain.entity
-import feed.listing.domain.entity.ListingError.PersistenceLayerError
-import feed.listing.domain.entity.ListingId
+import feed.listing.core.entity.ListingError.PersistenceLayerError
+import feed.listing.core.entity.ListingId
 
 trait ListingRepository {
   def getRecentListings(

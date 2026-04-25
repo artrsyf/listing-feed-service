@@ -10,13 +10,13 @@ import io.scalaland.chimney.dsl._
 import zio._
 import zio.interop.catz._
 
-import feed.listing.domain.entity
-import feed.listing.domain.entity.ListingError.PersistenceLayerError
-import feed.listing.domain.entity.ListingId
+import feed.listing.core.ListingRepository
+import feed.listing.core.entity
+import feed.listing.core.entity.ListingError.PersistenceLayerError
+import feed.listing.core.entity.ListingId
 import feed.listing.infrastructure.domain.model.postgres
 import feed.listing.infrastructure.domain.model.postgres.Listing
 import feed.listing.infrastructure.domain.model.postgres.ListingImage
-import feed.listing.repository.ListingRepository
 
 class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository {
   override def getRecentListings(

@@ -4,7 +4,7 @@ import enumeratum.Enum
 import enumeratum.EnumEntry
 import enumeratum.EnumEntry.Lowercase
 
-import feed.listing.shared.instances.ZioJsonEnum
+import feed.shared.instances.ZioJsonEnum
 
 sealed trait ElasticListingStatus extends EnumEntry with Lowercase with Product with Serializable
 

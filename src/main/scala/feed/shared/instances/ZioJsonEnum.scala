@@ -1,4 +1,4 @@
-package feed.listing.shared.instances
+package feed.shared.instances
 
 import enumeratum.Enum
 import enumeratum.EnumEntry

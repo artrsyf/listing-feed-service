@@ -4,7 +4,7 @@ import sttp.tapir.ztapir.ZServerEndpoint
 import zio.Chunk
 import zio.ZLayer
 
-import feed.listing.route.ListingRoute
+import feed.listing.infrastructure.route.ListingRoute
 
 trait RouteAggregator {
   def allRoutes: Chunk[ZServerEndpoint[Any, Any]]

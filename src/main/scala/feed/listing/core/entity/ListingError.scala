@@ -1,4 +1,4 @@
-package feed.listing.domain.entity
+package feed.listing.core.entity
 
 sealed trait ListingError extends Product with Serializable
 

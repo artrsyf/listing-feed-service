@@ -11,12 +11,12 @@ import com.sksamuel.elastic4s.zio.instances._
 import io.scalaland.chimney.dsl._
 import zio._
 
-import feed.listing.domain.entity.Listing
-import feed.listing.domain.entity.ListingError.PersistenceLayerError
+import feed.listing.core.ListingSearchEngine
+import feed.listing.core.entity.Listing
+import feed.listing.core.entity.ListingError.PersistenceLayerError
 import feed.listing.infrastructure.domain.dto.elastic.ElasticPayload
 import feed.listing.infrastructure.domain.model.elastic.ElasticListing
 import feed.listing.infrastructure.domain.model.elastic.ElasticListingImage
-import feed.listing.repository.ListingSearchEngine
 
 final class ListingElasticSearchEngine(
   listingSearchConfig: ElasticConfig,
