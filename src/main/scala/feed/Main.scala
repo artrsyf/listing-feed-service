@@ -10,6 +10,7 @@ import zio.http.Server
 
 import feed.listing.core.ListingService
 import feed.listing.infrastructure.delivery.ListingHttpHandler
+import feed.listing.infrastructure.query.ListingSearchController
 import feed.listing.infrastructure.repository.elastic.ElasticClient
 import feed.listing.infrastructure.repository.elastic.ListingElasticSearchEngine
 import feed.listing.infrastructure.repository.postgres.ListingPostgresRepository
@@ -58,6 +59,7 @@ object Main extends ZIOAppDefault {
       RouteAggregatorImpl.layer,
       ListingElasticSearchEngine.layer,
       ElasticClient.live,
-      EventQueue.chunkedListingEventQueueLayer
+      EventQueue.chunkedListingEventQueueLayer,
+      ListingSearchController.layer
     )
 }

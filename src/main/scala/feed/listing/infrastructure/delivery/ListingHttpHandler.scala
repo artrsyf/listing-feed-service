@@ -8,20 +8,31 @@ import zio._
 import feed.listing.core.ListingService
 import feed.listing.core.entity
 import feed.listing.core.entity.ListingId
+import feed.listing.infrastructure.domain.dto.elastic.ListingSearchCriteria
+import feed.listing.infrastructure.domain.dto.elastic.PageRequest
 import feed.listing.infrastructure.domain.dto.http.CreateListingRequest
 import feed.listing.infrastructure.domain.dto.http.CreateListingResponse
 import feed.listing.infrastructure.domain.dto.http.GetAllListingsResponse
 import feed.listing.infrastructure.domain.dto.http.ListingResponse
+import feed.listing.infrastructure.domain.dto.http.SearchListingsRequest
+import feed.listing.infrastructure.domain.dto.http.SearchListingsResponse
+import feed.listing.infrastructure.query.ListingSearchController
 import feed.shared.apierror.ApiError
 
-final class ListingHttpHandler(listingService: ListingService, listingConfig: ListingConfig)
-    extends ListingHandler {
+final class ListingHttpHandler(
+    listingService: ListingService,
+    listingConfig: ListingConfig,
+    listingSearchController: ListingSearchController
+) extends ListingHandler {
   override def getRecentListings(
-      cursor: Option[Instant],
+      cursor: Option[String],
       limit: Option[Int]
   ): IO[ApiError, GetAllListingsResponse] =
-    listingService
-      .getRecentListings(cursor, limit.getOrElse(listingConfig.limit))
+    listingSearchController
+      .search(
+        ListingSearchCriteria(None, None, None),
+        PageRequest(cursor, limit.getOrElse(listingConfig.limit))
+      )
       .mapBoth(
         {
           case entity.ListingError
@@ -29,14 +40,30 @@ final class ListingHttpHandler(listingService: ListingService, listingConfig: Li
             ApiError.Internal.default
           case _ => ApiError.Internal.default
         },
-        listings =>
-          feed.listing.infrastructure.domain.dto.http.GetAllListingsResponse(
-            listings
-              .map(
-                _.into[ListingResponse]
-                  .withFieldComputed(_.images, _.images.map(_.url))
-                  .transform
-              )
+        listingSearchResult =>
+          GetAllListingsResponse(
+            listingSearchResult.listings.map(
+              _.into[ListingResponse]
+                .withFieldComputed(_.images, _.images.map(_.url))
+                .transform
+            ),
+            listingSearchResult.cursor
+          )
+      )
+
+  override def searchListings(req: SearchListingsRequest): IO[ApiError, SearchListingsResponse] =
+    listingSearchController
+      .search(req.into[ListingSearchCriteria].transform, req.into[PageRequest].transform)
+      .mapBoth(
+        _ => ApiError.Internal.default,
+        result =>
+          SearchListingsResponse(
+            listings = result.listings.map(
+              _.into[ListingResponse]
+                .withFieldComputed(_.images, _.images.map(_.url))
+                .transform
+            ),
+            nextCursor = result.cursor
           )
       )
 
@@ -86,6 +113,6 @@ final class ListingHttpHandler(listingService: ListingService, listingConfig: Li
 }
 
 object ListingHttpHandler {
-  val layer: RLayer[ListingService, ListingHandler] = ZLayer
+  val layer: RLayer[ListingService & ListingSearchController, ListingHandler] = ZLayer
     .derive[ListingHttpHandler]
 }

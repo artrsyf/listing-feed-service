@@ -6,7 +6,7 @@ import java.util.UUID
 import sttp.tapir.Schema
 import zio.json._
 
-final case class GetAllListingsResponse(listings: List[ListingResponse])
+final case class GetAllListingsResponse(listings: List[ListingResponse], cursor: Option[String])
 
 object GetAllListingsResponse {
   implicit val codec: JsonCodec[GetAllListingsResponse] = DeriveJsonCodec

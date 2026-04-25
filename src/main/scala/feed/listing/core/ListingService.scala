@@ -7,11 +7,12 @@ import zio._
 
 import feed.listing.core.entity.ListingError
 import feed.listing.core.entity.ListingId
+import feed.listing.infrastructure.domain.dto.http.SearchListingsRequest
 import feed.shared.collections.EventQueue
 
 final class ListingService(
     listingRepo: ListingRepository,
-    listingSearchEngine: ListingSearchEngine,
+    listingSearchEngine: ListingSearchIndexEngine,
     listingCreateIndexQueue: EventQueue[entity.Listing]
 ) extends ZLayer.Derive.Scoped[Any, Nothing] {
   override def scoped(implicit trace: Trace): ZIO[Any & Scope, Nothing, Any] =
@@ -19,6 +20,7 @@ final class ListingService(
       listingSearchEngine.insertMany(listingsChunk).tapError(e => ZIO.logError(e.msg)).ignore
     }
 
+  @deprecated("Чтение идет через отдельный контроллер", "25-04-2026")
   def getRecentListings(
       cursor: Option[Instant],
       limit: Int
@@ -36,7 +38,7 @@ final class ListingService(
 }
 
 object ListingService {
-  val layer: RLayer[ListingRepository & ListingSearchEngine & EventQueue[
+  val layer: RLayer[ListingRepository & ListingSearchIndexEngine & EventQueue[
     entity.Listing
   ], ListingService] =
     ZLayer.derive[ListingService]

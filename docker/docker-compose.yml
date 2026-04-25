@@ -14,6 +14,8 @@ services:
     depends_on:
       feed_service_postgres:
         condition: service_started
+      feed_service_elastic:
+        condition: service_started
     networks:
       - feed_service_network
 
@@ -29,6 +31,20 @@ services:
       - "5432:5432"
     expose:
       - 5432
+    networks:
+      - feed_service_network
+
+  feed_service_elastic:
+    container_name: feed_service_elastic
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    expose:
+      - 9200
     networks:
       - feed_service_network
 

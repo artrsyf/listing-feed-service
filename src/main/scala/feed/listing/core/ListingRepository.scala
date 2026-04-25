@@ -8,6 +8,7 @@ import feed.listing.core.entity.ListingError.PersistenceLayerError
 import feed.listing.core.entity.ListingId
 
 trait ListingRepository {
+  @deprecated("Модель чтения идет через ES", "25-04-2026")
   def getRecentListings(
       cursor: Option[Instant],
       limit: Int
