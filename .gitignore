@@ -48,6 +48,15 @@ build/
 .bloop/
 metals.sbt
 
+### NPM ###
+ui/node_modules
+ui/coverage
+ui/build
+
+### AI ###
+ui/.nessy
+
 ### Secrets ###
+ui/**/.env
 secrets.env
 postgres.env

@@ -1,0 +1,44 @@
+.infinite-scroll-trigger {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  min-height: 100px;
+}
+
+.infinite-scroll-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.infinite-scroll-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e0e0e0;
+  border-top-color: #00a51a;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.infinite-scroll-end {
+  color: #888;
+  font-size: 14px;
+  text-align: center;
+}
+
+@media (prefers-color-scheme: dark) {
+  .infinite-scroll-spinner {
+    border-color: #444;
+    border-top-color: #00c422;
+  }
+
+  .infinite-scroll-end {
+    color: #666;
+  }
+}
