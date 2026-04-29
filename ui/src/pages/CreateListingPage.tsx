@@ -82,10 +82,10 @@ function CreateListingPage() {
       setImages(prev => prev.map(img =>
         img.previewUrl === image.previewUrl
           ? {
-              ...img,
-              isUploading: false,
-              uploadError: err instanceof Error ? err.message : 'Ошибка загрузки'
-            }
+            ...img,
+            isUploading: false,
+            uploadError: err instanceof Error ? err.message : 'Ошибка загрузки'
+          }
           : img
       ))
     }
@@ -103,7 +103,7 @@ function CreateListingPage() {
     try {
       // Проверяем, что все изображения загружены
       const uploadedImages = images.filter(img => img.key && !img.isUploading)
-      
+
       if (uploadedImages.length === 0) {
         setError('Добавьте хотя бы одно изображение')
         setIsLoading(false)
@@ -127,8 +127,9 @@ function CreateListingPage() {
       }
 
       const response = await api.createListing(dataToSubmit)
-      
-      // Перенаправляем на страницу созданного объявления
+
+      // TODO: Создание объявления согласованно в конечном счете, 
+      // мгновенный редирект приводит к 404 до флаша в ES
       navigate(`/listing/${response.id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка создания объявления')
@@ -226,7 +227,7 @@ function CreateListingPage() {
             <label className="create-listing-page__label">
               Изображения *
             </label>
-            
+
             <div className="create-listing-page__image-preview">
               {images.map((image, index) => (
                 <div key={image.previewUrl} className="create-listing-page__image-item">
@@ -273,7 +274,7 @@ function CreateListingPage() {
                 📷 Выбрать фото
               </span>
             </label>
-            
+
             {images.length > 0 && (
               <p className="create-listing-page__image-hint">
                 Загружено: {images.filter(img => img.key && !img.uploadError).length} из {images.length}

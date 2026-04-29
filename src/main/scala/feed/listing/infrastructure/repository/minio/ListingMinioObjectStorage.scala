@@ -64,7 +64,9 @@ object ListingMinioObjectStorage {
         client <- ZIO.service[MinioClient]
         config <- ZIO.config[MinioConfig]
 
-        _ <- ensureBucketExists(client, config.bucket)
+        _ <- ensureBucketExists(client, config.bucket).retry(
+          Schedule.exponential(200.millis) && Schedule.recurs(5)
+        )
       } yield new ListingMinioObjectStorage(client, config)
     }
 

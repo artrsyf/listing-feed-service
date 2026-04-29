@@ -64,10 +64,9 @@ final class ListingElasticSearchEngine(
           ).flatten
         )
 
-    // TODO: Сделать поле id keyword, задать явный маппинг
     val searchRequest =
       search(listingSearchConfig.listingIndexName)
-        .sortBy(FieldSort("createdAt").desc(), FieldSort("id.keyword").desc())
+        .sortBy(FieldSort("createdAt").desc(), FieldSort("id").desc())
         .query(baseQuery)
         .size(page.limit)
 
@@ -136,7 +135,7 @@ final class ListingElasticSearchEngine(
       indexExistsResponse <- elasticClient.execute {
         indexExists(listingSearchConfig.listingIndexName)
       }
-      _ <- {
+      res <- {
         val createIndexQuery = {
           val req = createIndex(listingSearchConfig.listingIndexName)
 
@@ -149,7 +148,7 @@ final class ListingElasticSearchEngine(
 
         elasticClient.execute(createIndexQuery)
       }.unless(indexExistsResponse.result.exists)
-    } yield ()
+    } yield res
 
   private def indexBulk(esPayloads: Chunk[ElasticPayload[ElasticListing]]): Task[Unit] =
     elasticClient.execute {
@@ -159,5 +158,22 @@ final class ListingElasticSearchEngine(
 
 object ListingElasticSearchEngine {
   val layer: RLayer[ElasticClient, ListingElasticSearchEngine] =
-    ZLayer.derive[ListingElasticSearchEngine]
+    ZLayer.fromZIO {
+      for {
+        client <- ZIO.service[ElasticClient]
+        config <- ZIO.config[ElasticConfig]
+
+        engine = new ListingElasticSearchEngine(config, client)
+
+        resp <- engine
+          .createIndexIfNotExists(fields = ElasticListing.listingFields, analysis = None)
+          .retry(Schedule.exponential(200.millis) && Schedule.recurs(5))
+        _ <- ZIO.foreach(resp) { esResp =>
+          ZIO
+            .fail(new RuntimeException(esResp.error.reason))
+            .when(esResp.isError)
+            .someOrElseZIO(ZIO.logInfo("Successfully created ES index"))
+        }
+      } yield engine
+    }
 }

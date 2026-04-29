@@ -15,7 +15,7 @@ services:
       feed_service_postgres:
         condition: service_started
       feed_service_elastic:
-        condition: service_started
+        condition: service_healthy
       feed-service-minio:
         condition: service_started
     networks:
@@ -47,6 +47,11 @@ services:
       - feed_service_elastic_data:/usr/share/elasticsearch/data
     ports:
       - "9200:9200"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9200" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     expose:
       - 9200
     networks:
