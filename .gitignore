@@ -60,3 +60,4 @@ ui/.nessy
 ui/**/.env
 secrets.env
 postgres.env
+minio.env

@@ -1,4 +1,4 @@
-package feed.listing.infrastructure.domain.dto.http
+package feed.listing.infrastructure.domain.dto.http.createlisting
 
 import java.time.Instant
 import java.util.UUID

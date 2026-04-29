@@ -8,12 +8,14 @@ import zio._
 
 import feed.listing.core.entity.ListingId
 import feed.listing.infrastructure.delivery.ListingHandler
-import feed.listing.infrastructure.domain.dto.http.CreateListingRequest
-import feed.listing.infrastructure.domain.dto.http.CreateListingResponse
 import feed.listing.infrastructure.domain.dto.http.GetAllListingsResponse
 import feed.listing.infrastructure.domain.dto.http.ListingResponse
-import feed.listing.infrastructure.domain.dto.http.SearchListingsRequest
-import feed.listing.infrastructure.domain.dto.http.SearchListingsResponse
+import feed.listing.infrastructure.domain.dto.http.createlisting.CreateListingRequest
+import feed.listing.infrastructure.domain.dto.http.createlisting.CreateListingResponse
+import feed.listing.infrastructure.domain.dto.http.generateuploadurl.GenerateUploadUrlRequest
+import feed.listing.infrastructure.domain.dto.http.generateuploadurl.GenerateUploadUrlResponse
+import feed.listing.infrastructure.domain.dto.http.searchlistings.SearchListingsRequest
+import feed.listing.infrastructure.domain.dto.http.searchlistings.SearchListingsResponse
 import feed.shared.apierror.ApiError.errorMapper
 
 final class ListingRouteImpl(listingHandler: ListingHandler) extends ListingRoute {
@@ -61,8 +63,16 @@ final class ListingRouteImpl(listingHandler: ListingHandler) extends ListingRout
       .errorOut(errorMapper)
       .zServerLogic(req => listingHandler.createListing(req))
 
+  private val generateUploadUrl =
+    baseEndpoint.post
+      .in("images" / "upload-url")
+      .in(jsonBody[GenerateUploadUrlRequest])
+      .out(jsonBody[GenerateUploadUrlResponse])
+      .errorOut(errorMapper)
+      .zServerLogic(_ => listingHandler.generateUploadUrl)
+
   override val routes =
-    Chunk(getRecentListings, getListing, searchListings, createListing)
+    Chunk(getRecentListings, getListing, searchListings, createListing, generateUploadUrl)
 }
 
 object ListingRouteImpl {

@@ -1,4 +1,4 @@
-package feed.listing.infrastructure.domain.dto.http
+package feed.listing.infrastructure.domain.dto.http.searchlistings
 
 import sttp.tapir.Schema
 import zio.json.DeriveJsonCodec

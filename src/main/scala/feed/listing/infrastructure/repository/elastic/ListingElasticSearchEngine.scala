@@ -15,14 +15,15 @@ import io.scalaland.chimney.dsl._
 import zio._
 import zio.json._
 
-import feed.listing.core.ListingSearchIndexEngine
+import feed.listing.core.ListingSearchCreateEngine
 import feed.listing.core.entity.Listing
 import feed.listing.core.entity.ListingError.PersistenceLayerError
+import feed.listing.core.entity.ListingId
 import feed.listing.infrastructure.domain.dto.elastic.ElasticPayload
 import feed.listing.infrastructure.domain.dto.elastic.ListingSearchCriteria
 import feed.listing.infrastructure.domain.dto.elastic.ListingSearchResult
 import feed.listing.infrastructure.domain.dto.elastic.PageRequest
-import feed.listing.infrastructure.domain.dto.http.SearchListingsRequest
+import feed.listing.infrastructure.domain.dto.http.searchlistings.SearchListingsRequest
 import feed.listing.infrastructure.domain.model.elastic.ElasticListing
 import feed.listing.infrastructure.domain.model.elastic.ElasticListingImage
 import feed.listing.infrastructure.query.ListingSearchReadEngine
@@ -31,7 +32,7 @@ final class ListingElasticSearchEngine(
     listingSearchConfig: ElasticConfig,
     elasticClient: ElasticClient
 ) extends ListingSearchReadEngine
-    with ListingSearchIndexEngine {
+    with ListingSearchCreateEngine {
   override def insertMany(listings: Chunk[Listing]): IO[PersistenceLayerError, Unit] =
     indexBulk(listings.map { listing =>
       val elasticListing =
@@ -41,7 +42,7 @@ final class ListingElasticSearchEngine(
           .withFieldComputed(
             _.images,
             _.images.map(img =>
-              ElasticListingImage(img.id, listing.id, img.url, img.url, img.position, Instant.now())
+              ElasticListingImage(img.id, listing.id, img.key, img.position, Instant.now())
             )
           )
           .transform
@@ -109,6 +110,22 @@ final class ListingElasticSearchEngine(
 
   def decodeCursor(c: String): List[String] =
     new String(Base64.getDecoder.decode(c)).fromJson[Cursor].toOption.get.values
+
+  override def getById(id: ListingId): IO[PersistenceLayerError, Option[Listing]] =
+    elasticClient
+      .execute {
+        get(listingSearchConfig.listingIndexName, id.toString())
+      }
+      .flatMap { resp =>
+        if (!resp.result.found) ZIO.none
+        else
+          ZIO
+            .fromEither(resp.result.sourceAsString.fromJson[ElasticListing])
+            .map(_.transformInto[Listing])
+            .map(Some(_))
+            .mapError(err => new RuntimeException(s"Failed to decode ES document: $err"))
+      }
+      .mapError(e => PersistenceLayerError(e.getMessage))
 
   private def createIndexIfNotExists(
       fields: Seq[ElasticField],

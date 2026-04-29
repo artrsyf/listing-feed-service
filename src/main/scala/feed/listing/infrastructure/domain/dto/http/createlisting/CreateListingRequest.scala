@@ -1,4 +1,4 @@
-package feed.listing.infrastructure.domain.dto.http
+package feed.listing.infrastructure.domain.dto.http.createlisting
 
 import sttp.tapir.Schema
 import zio.json._
@@ -8,7 +8,7 @@ final case class CreateListingRequest(
     description: String,
     price: BigDecimal,
     currency: String,
-    imageUrls: List[String]
+    imageKeys: List[String]
 )
 
 object CreateListingRequest {

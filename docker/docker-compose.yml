@@ -16,6 +16,8 @@ services:
         condition: service_started
       feed_service_elastic:
         condition: service_started
+      feed-service-minio:
+        condition: service_started
     networks:
       - feed_service_network
 
@@ -41,6 +43,8 @@ services:
       - discovery.type=single-node
       - xpack.security.enabled=false
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    volumes:
+      - feed_service_elastic_data:/usr/share/elasticsearch/data
     ports:
       - "9200:9200"
     expose:
@@ -48,6 +52,37 @@ services:
     networks:
       - feed_service_network
 
+  feed-service-minio:
+    container_name: feed_service_minio
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    command: server /data --console-address ":9001"
+    env_file:
+      - ../minio.env
+    ports:
+      - "9001:9001"
+    expose:
+      - "9000"
+    volumes:
+      - feed_service_minio_data:/data
+    networks:
+      - feed_service_network
+
+  feed_service_minio_proxy:
+    image: nginx:alpine
+    container_name: feed_service_minio_proxy
+    ports:
+      - "9000:9000"
+    volumes:
+      - ../nginx/minio.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - feed-service-minio
+    networks:
+      - feed_service_network
+
 volumes:
   feed_service_postgres_data:
+    driver: "local"
+  feed_service_minio_data:
+    driver: "local"
+  feed_service_elastic_data:
     driver: "local"

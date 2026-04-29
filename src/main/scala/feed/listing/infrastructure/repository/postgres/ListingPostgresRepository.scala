@@ -107,7 +107,7 @@ class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository 
   }
 
   private def getListingImages(listingId: ListingId) = sql"""
-        SELECT id, listing_id, url, key, position, created_at
+        SELECT id, listing_id, key, position, created_at
         FROM listing_images
         WHERE listing_id = $listingId
         ORDER BY position ASC
@@ -139,8 +139,7 @@ class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository 
       postgres.ListingImage(
         id = img.id,
         listingId = listingId,
-        url = img.url,
-        key = img.url,
+        key = img.key,
         position = img.position,
         createdAt = createdAt
       )
@@ -148,8 +147,8 @@ class ListingPostgresRepository(xa: Transactor[Task]) extends ListingRepository 
 
     Update[ListingImage]("""
       INSERT INTO listing_images (
-        id, listing_id, url, key, position, created_at
-      ) VALUES (?, ?, ?, ?, ?, ?)
+        id, listing_id, key, position, created_at
+      ) VALUES (?, ?, ?, ?, ?)
     """).updateMany(modelImages)
   }
 }

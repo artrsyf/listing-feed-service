@@ -13,6 +13,9 @@ trait ListingRepository {
       cursor: Option[Instant],
       limit: Int
   ): IO[PersistenceLayerError, List[entity.Listing]]
+
+  @deprecated("Модель чтения идет через ES", "29-04-2026")
   def getById(listingId: ListingId): IO[PersistenceLayerError, Option[entity.Listing]]
+
   def create(l: entity.Listing): IO[PersistenceLayerError, Unit]
 }

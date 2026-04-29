@@ -34,8 +34,23 @@ object ApiError {
       NotFound("Object not found")
   }
 
+  final case class BadRequest(msg: String) extends ApiError
+
+  object BadRequest {
+    implicit val notFoundCodec: JsonCodec[BadRequest] = DeriveJsonCodec
+      .gen[BadRequest]
+    implicit val notFoundSchema: Schema[BadRequest] = Schema
+      .derived[BadRequest]
+
+    val listingCreate = BadRequest("Incorrect request for listing create")
+
+    val default =
+      BadRequest("Bad request")
+  }
+
   val errorMapper = oneOf[ApiError](
     oneOfVariant(StatusCode.NotFound, jsonBody[ApiError.NotFound]),
-    oneOfVariant(StatusCode.InternalServerError, jsonBody[ApiError.Internal])
+    oneOfVariant(StatusCode.InternalServerError, jsonBody[ApiError.Internal]),
+    oneOfVariant(StatusCode.BadRequest, jsonBody[ApiError.BadRequest]),
   )
 }

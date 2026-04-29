@@ -1,8 +1,10 @@
-package feed.listing.infrastructure.domain.dto.http
+package feed.listing.infrastructure.domain.dto.http.searchlistings
 
 import sttp.tapir.Schema
 import zio.json.DeriveJsonCodec
 import zio.json.JsonCodec
+
+import feed.listing.infrastructure.domain.dto.http.ListingResponse
 
 final case class SearchListingsResponse(listings: List[ListingResponse], nextCursor: Option[String])
 

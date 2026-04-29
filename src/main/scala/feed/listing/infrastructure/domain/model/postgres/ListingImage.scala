@@ -8,7 +8,6 @@ import feed.listing.core.entity.ListingId
 final case class ListingImage(
     id: UUID,
     listingId: ListingId,
-    url: String,
     key: String,
     position: Int,
     createdAt: Instant
