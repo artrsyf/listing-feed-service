@@ -9,6 +9,7 @@ function ListingPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [listing, setListing] = useState<ListingResponse | null>(null)
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -75,6 +76,8 @@ function ListingPage() {
     )
   }
 
+  const hasMultipleImages = listing.images.length > 1
+
   return (
     <div className="listing-page">
       <nav className="listing-page__nav">
@@ -86,11 +89,29 @@ function ListingPage() {
       <main className="listing-page__content">
         <div className="listing-page__gallery">
           {listing.images.length > 0 ? (
-            <img
-              src={listing.images[0]}
-              alt={listing.title}
-              className="listing-page__main-image"
-            />
+            <>
+              <img
+                src={listing.images[selectedImageIndex]?.url}
+                alt={`${listing.title} - фото ${selectedImageIndex + 1}`}
+                className="listing-page__main-image"
+              />
+              
+              {hasMultipleImages && (
+                <div className="listing-page__thumbnails">
+                  {listing.images.map((image, index) => (
+                    <button
+                      key={image.position}
+                      onClick={() => setSelectedImageIndex(index)}
+                      className={`listing-page__thumbnail ${
+                        index === selectedImageIndex ? 'listing-page__thumbnail--active' : ''
+                      }`}
+                    >
+                      <img src={image.url} alt={`Фото ${index + 1}`} />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
           ) : (
             <div className="listing-page__no-image">Нет фото</div>
           )}

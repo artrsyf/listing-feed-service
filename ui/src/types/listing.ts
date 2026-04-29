@@ -1,10 +1,15 @@
+export interface ListingImageResponse {
+  url: string
+  position: number
+}
+
 export interface ListingResponse {
   id: string
   title: string
   description: string
   price: number
   currency: string
-  images: string[]
+  images: ListingImageResponse[]
   createdAt: string
 }
 
@@ -23,10 +28,19 @@ export interface CreateListingRequest {
   description: string
   price: number
   currency: string
-  imageUrls: string[]
+  imageKeys: string[]
 }
 
 export interface CreateListingResponse {
   id: string
   createdAt: string
+}
+
+export interface GenerateUploadUrlRequest {
+  contentType: string
+}
+
+export interface GenerateUploadUrlResponse {
+  key: string
+  uploadUrl: string
 }

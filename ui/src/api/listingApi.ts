@@ -2,7 +2,9 @@ import type {
   ListingResponse,
   GetAllListingsResponse,
   CreateListingRequest,
-  CreateListingResponse
+  CreateListingResponse,
+  GenerateUploadUrlRequest,
+  GenerateUploadUrlResponse
 } from '../types/listing'
 
 const USE_FIXTURES = import.meta.env.VITE_USE_FIXTURES === 'true'
@@ -46,23 +48,30 @@ const generateFixtures = (count: number, cursor?: string): GetAllListingsRespons
   ]
   
   const currencies = ['RUB', 'USD', 'EUR']
-  const images = [
+  const imageUrls = [
     'https://picsum.photos/400/300?random=1',
     'https://picsum.photos/400/300?random=2',
     'https://picsum.photos/400/300?random=3',
     'https://picsum.photos/400/300?random=4',
     'https://picsum.photos/400/300?random=5'
   ]
-  
+
   const listings: ListingResponse[] = Array.from({ length: count }, (_, i) => {
     const index = startIndex + i
+    // Генерируем 1-3 изображения для каждого объявления
+    const imageCount = (index % 3) + 1
+    const listingImages = Array.from({ length: imageCount }, (_, j) => ({
+      url: imageUrls[(index + j) % imageUrls.length],
+      position: j
+    }))
+    
     return {
       id: `fixture-${index}-${Date.now()}`,
       title: titles[index % titles.length],
       description: descriptions[index % descriptions.length],
       price: Math.floor(Math.random() * 100000) + 1000,
       currency: currencies[index % currencies.length],
-      images: [images[index % images.length]],
+      images: listingImages,
       createdAt: new Date(Date.now() - index * 86400000).toISOString()
     }
   })
@@ -104,11 +113,15 @@ export const api = {
         description: 'Это фикстурное объявление для тестирования. Отличное состояние, полный комплект, гарантия.',
         price: 150000,
         currency: 'RUB',
-        images: ['https://picsum.photos/600/400?random=fixture'],
+        images: [
+          { url: 'https://picsum.photos/600/400?random=fixture1', position: 0 },
+          { url: 'https://picsum.photos/600/400?random=fixture2', position: 1 },
+          { url: 'https://picsum.photos/600/400?random=fixture3', position: 2 }
+        ],
         createdAt: new Date().toISOString()
       }
     }
-    
+
     const response = await fetch(`${API_BASE}/listing/${id}`)
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
@@ -124,7 +137,7 @@ export const api = {
         createdAt: new Date().toISOString()
       }
     }
-    
+
     const response = await fetch(`${API_BASE}/listings`, {
       method: 'POST',
       headers: {
@@ -136,5 +149,49 @@ export const api = {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
     return response.json()
+  },
+
+  // Получение URL для загрузки изображения
+  async generateUploadUrl(data: GenerateUploadUrlRequest): Promise<GenerateUploadUrlResponse> {
+    if (USE_FIXTURES) {
+      await new Promise(resolve => setTimeout(resolve, 200))
+      // Генерируем фиктивный ключ и URL
+      const key = `fixture-image-${Date.now()}-${Math.random().toString(36).slice(2)}`
+      return {
+        key,
+        uploadUrl: `https://fixture-minio.example.com/${key}`
+      }
+    }
+
+    const response = await fetch(`${API_BASE}/images/upload-url`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    return response.json()
+  },
+
+  // Загрузка файла в объектное хранилище (Minio)
+  async uploadFile(url: string, file: File): Promise<void> {
+    if (USE_FIXTURES) {
+      await new Promise(resolve => setTimeout(resolve, 300))
+      return
+    }
+
+    const response = await fetch(url, {
+      method: 'PUT',
+      body: file,
+      headers: {
+        'Content-Type': file.type
+      }
+    })
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
   }
 }

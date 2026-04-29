@@ -36,7 +36,7 @@ function ListingCard({ listing }: ListingCardProps) {
       <div className="listing-card__image-wrapper">
         {listing.images.length > 0 ? (
           <img
-            src={listing.images[0]}
+            src={listing.images[0].url}
             alt={listing.title}
             className="listing-card__image"
             loading="lazy"

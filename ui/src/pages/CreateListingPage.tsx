@@ -4,15 +4,23 @@ import { api } from '../api/listingApi'
 import type { CreateListingRequest } from '../types/listing'
 import './CreateListingPage.css'
 
+interface UploadedImage {
+  key: string
+  previewUrl: string
+  file: File
+  isUploading: boolean
+  uploadError?: string
+}
+
 function CreateListingPage() {
   const navigate = useNavigate()
-  const [formData, setFormData] = useState<CreateListingRequest>({
+  const [formData, setFormData] = useState({
     title: '',
     description: '',
     price: 0,
-    currency: 'RUB',
-    imageUrls: ['']
+    currency: 'RUB'
   })
+  const [images, setImages] = useState<UploadedImage[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -26,22 +34,65 @@ function CreateListingPage() {
     }))
   }
 
-  const handleImageChange = (index: number, value: string) => {
-    const newImages = [...formData.imageUrls]
-    newImages[index] = value
-    setFormData(prev => ({ ...prev, imageUrls: newImages }))
-  }
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
 
-  const addImageField = () => {
-    setFormData(prev => ({ ...prev, imageUrls: [...prev.imageUrls, ''] }))
-  }
-
-  const removeImageField = (index: number) => {
-    if (formData.imageUrls.length === 1) return
-    setFormData(prev => ({
-      ...prev,
-      imageUrls: prev.imageUrls.filter((_, i) => i !== index)
+    const newImages: UploadedImage[] = files.map(file => ({
+      key: '',
+      previewUrl: URL.createObjectURL(file),
+      file,
+      isUploading: false
     }))
+
+    setImages(prev => [...prev, ...newImages])
+
+    // Загружаем каждое изображение
+    for (const image of newImages) {
+      await uploadImage(image)
+    }
+
+    // Очищаем input
+    e.target.value = ''
+  }
+
+  const uploadImage = async (image: UploadedImage) => {
+    setImages(prev => prev.map(img =>
+      img.previewUrl === image.previewUrl
+        ? { ...img, isUploading: true, uploadError: undefined }
+        : img
+    ))
+
+    try {
+      // Шаг 1: Получаем upload-url от бэкенда
+      const { key, uploadUrl } = await api.generateUploadUrl({
+        contentType: image.file.type
+      })
+
+      // Шаг 2: Загружаем файл в Minio
+      await api.uploadFile(uploadUrl, image.file)
+
+      // Шаг 3: Сохраняем ключ
+      setImages(prev => prev.map(img =>
+        img.previewUrl === image.previewUrl
+          ? { ...img, key, isUploading: false }
+          : img
+      ))
+    } catch (err) {
+      setImages(prev => prev.map(img =>
+        img.previewUrl === image.previewUrl
+          ? {
+              ...img,
+              isUploading: false,
+              uploadError: err instanceof Error ? err.message : 'Ошибка загрузки'
+            }
+          : img
+      ))
+    }
+  }
+
+  const removeImage = (previewUrl: string) => {
+    setImages(prev => prev.filter(img => img.previewUrl !== previewUrl))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,16 +101,29 @@ function CreateListingPage() {
     setError(null)
 
     try {
-      // Фильтруем пустые URL
-      const dataToSubmit = {
-        ...formData,
-        imageUrls: formData.imageUrls.filter(url => url.trim() !== '')
-      }
-
-      if (dataToSubmit.imageUrls.length === 0) {
+      // Проверяем, что все изображения загружены
+      const uploadedImages = images.filter(img => img.key && !img.isUploading)
+      
+      if (uploadedImages.length === 0) {
         setError('Добавьте хотя бы одно изображение')
         setIsLoading(false)
         return
+      }
+
+      // Проверяем, есть ли незагруженные изображения
+      const hasUploadErrors = images.some(img => img.uploadError)
+      if (hasUploadErrors) {
+        setError('Не все изображения загружены. Удалите файлы с ошибками.')
+        setIsLoading(false)
+        return
+      }
+
+      const dataToSubmit: CreateListingRequest = {
+        title: formData.title,
+        description: formData.description,
+        price: formData.price,
+        currency: formData.currency,
+        imageKeys: uploadedImages.map(img => img.key)
       }
 
       const response = await api.createListing(dataToSubmit)
@@ -160,35 +224,61 @@ function CreateListingPage() {
 
           <div className="create-listing-page__field">
             <label className="create-listing-page__label">
-              Изображения (URL) *
+              Изображения *
             </label>
-            {formData.imageUrls.map((url, index) => (
-              <div key={index} className="create-listing-page__image-field">
-                <input
-                  type="url"
-                  value={url}
-                  onChange={(e) => handleImageChange(index, e.target.value)}
-                  placeholder={`https://example.com/image${index + 1}.jpg`}
-                  className="create-listing-page__input"
-                />
-                {formData.imageUrls.length > 1 && (
+            
+            <div className="create-listing-page__image-preview">
+              {images.map((image, index) => (
+                <div key={image.previewUrl} className="create-listing-page__image-item">
+                  <img
+                    src={image.previewUrl}
+                    alt={`Preview ${index}`}
+                    className="create-listing-page__image-preview-item"
+                  />
+                  {image.isUploading && (
+                    <div className="create-listing-page__image-overlay">
+                      <div className="create-listing-page__spinner"></div>
+                    </div>
+                  )}
+                  {image.uploadError && (
+                    <div className="create-listing-page__image-error">
+                      ⚠️
+                    </div>
+                  )}
+                  {image.key && !image.isUploading && !image.uploadError && (
+                    <div className="create-listing-page__image-success">
+                      ✓
+                    </div>
+                  )}
                   <button
                     type="button"
-                    onClick={() => removeImageField(index)}
-                    className="create-listing-page__remove-btn"
+                    onClick={() => removeImage(image.previewUrl)}
+                    className="create-listing-page__image-remove"
                   >
                     ✕
                   </button>
-                )}
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={addImageField}
-              className="create-listing-page__add-image-btn"
-            >
-              + Добавить ещё изображение
-            </button>
+                </div>
+              ))}
+            </div>
+
+            <label className="create-listing-page__file-input-label">
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleFileSelect}
+                className="create-listing-page__file-input"
+              />
+              <span className="create-listing-page__file-input-btn">
+                📷 Выбрать фото
+              </span>
+            </label>
+            
+            {images.length > 0 && (
+              <p className="create-listing-page__image-hint">
+                Загружено: {images.filter(img => img.key && !img.uploadError).length} из {images.length}
+              </p>
+            )}
           </div>
 
           <button

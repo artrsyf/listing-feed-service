@@ -1,8 +1,10 @@
 .infinite-scroll-trigger {
   display: flex;
   justify-content: center;
+  align-items: center;
   padding: 20px;
   min-height: 100px;
+  width: 100%;
 }
 
 .infinite-scroll-loader {
@@ -30,6 +32,9 @@
   color: #888;
   font-size: 14px;
   text-align: center;
+  margin: 0;
+  padding: 20px;
+  width: 100%;
 }
 
 @media (prefers-color-scheme: dark) {

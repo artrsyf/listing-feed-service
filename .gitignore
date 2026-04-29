@@ -52,6 +52,8 @@ metals.sbt
 ui/node_modules
 ui/coverage
 ui/build
+ui/dist
+ui/*.tsbuildinfo
 
 ### AI ###
 ui/.nessy

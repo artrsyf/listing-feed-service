@@ -6,9 +6,10 @@ interface InfiniteScrollProps {
   isLoading: boolean
   onLoadMore: () => void
   children: React.ReactNode
+  listingsCount?: number
 }
 
-function InfiniteScroll({ hasMore, isLoading, onLoadMore, children }: InfiniteScrollProps) {
+function InfiniteScroll({ hasMore, isLoading, onLoadMore, children, listingsCount = 0 }: InfiniteScrollProps) {
   const observerRef = useRef<IntersectionObserver | null>(null)
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
@@ -48,7 +49,7 @@ function InfiniteScroll({ hasMore, isLoading, onLoadMore, children }: InfiniteSc
             <div className="infinite-scroll-spinner"></div>
           </div>
         )}
-        {!hasMore && (
+        {!hasMore && listingsCount > 0 && (
           <p className="infinite-scroll-end">Больше объявлений нет</p>
         )}
       </div>
