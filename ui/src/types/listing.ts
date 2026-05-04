@@ -44,3 +44,29 @@ export interface GenerateUploadUrlResponse {
   key: string
   uploadUrl: string
 }
+
+export interface SearchListingsRequest {
+  query?: string
+  cursor?: string
+  limit: number
+  minPrice?: number
+  maxPrice?: number
+}
+
+export interface SearchListingsResponse {
+  listings: ListingResponse[]
+  nextCursor: string | null
+}
+
+export interface UpdateListingRequest {
+  title?: string
+  description?: string
+  price?: number
+  currency?: string
+  imageKeys?: string[]
+}
+
+export interface UpdateListingResponse {
+  id: string
+  updatedAt: string
+}

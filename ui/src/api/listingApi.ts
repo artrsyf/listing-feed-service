@@ -4,10 +4,38 @@ import type {
   CreateListingRequest,
   CreateListingResponse,
   GenerateUploadUrlRequest,
-  GenerateUploadUrlResponse
+  GenerateUploadUrlResponse,
+  SearchListingsRequest,
+  SearchListingsResponse,
+  UpdateListingRequest,
+  UpdateListingResponse
 } from '../types/listing'
 
 const USE_FIXTURES = import.meta.env.VITE_USE_FIXTURES === 'true'
+
+// Фиксированные цены для каждого товара (детерминированные фикстуры)
+const FIXED_PRICES = [
+  150000,  // iPhone 15 Pro Max
+  250000,  // MacBook Pro 16"
+  55000,   // Sony PlayStation 5
+  35000,   // Велосипед горный
+  45000,   // Диван угловой
+  65000,   // Холодильник Samsung
+  25000,   // Наушники AirPods Pro
+  85000,   // Камера Canon EOS
+  15000,   // Стол офисный
+  12000,   // Кроссовки Nike Air
+  120000,  // Телевизор LG OLED
+  65000,   // Планшет iPad Air
+  45000,   // Часы Apple Watch
+  8000,    // Клавиатура механическая
+  5000,    // Мышь игровая
+  35000,   // Монитор 27" 4K
+  55000,   // Кофемашина DeLonghi
+  25000,   // Пылесос робот
+  15000,   // Умная колонка
+  5000     // Фитнес-браслет
+]
 
 const generateFixtures = (count: number, cursor?: string): GetAllListingsResponse => {
   const startIndex = cursor ? parseInt(cursor, 10) : 0
@@ -33,7 +61,7 @@ const generateFixtures = (count: number, cursor?: string): GetAllListingsRespons
     'Умная колонка',
     'Фитнес-браслет'
   ]
-  
+
   const descriptions = [
     'Отличное состояние, использовался бережно. Полный комплект.',
     'Новый, в упаковке. Гарантия 1 год.',
@@ -46,7 +74,7 @@ const generateFixtures = (count: number, cursor?: string): GetAllListingsRespons
     'Классический дизайн, проверенное качество.',
     'Современный функционал по доступной цене.'
   ]
-  
+
   const currencies = ['RUB', 'USD', 'EUR']
   const imageUrls = [
     'https://picsum.photos/400/300?random=1',
@@ -64,20 +92,20 @@ const generateFixtures = (count: number, cursor?: string): GetAllListingsRespons
       url: imageUrls[(index + j) % imageUrls.length],
       position: j
     }))
-    
+
     return {
-      id: `fixture-${index}-${Date.now()}`,
+      id: `fixture-${index}`,
       title: titles[index % titles.length],
       description: descriptions[index % descriptions.length],
-      price: Math.floor(Math.random() * 100000) + 1000,
+      price: FIXED_PRICES[index % FIXED_PRICES.length],
       currency: currencies[index % currencies.length],
       images: listingImages,
       createdAt: new Date(Date.now() - index * 86400000).toISOString()
     }
   })
-  
+
   const nextCursor = startIndex + count < 100 ? String(startIndex + count) : null
-  
+
   return {
     listings,
     cursor: nextCursor
@@ -107,11 +135,28 @@ export const api = {
   async getListing(id: string): Promise<ListingResponse> {
     if (USE_FIXTURES) {
       await new Promise(resolve => setTimeout(resolve, 200))
+      
+      // Пытаемся найти объявление по ID из фикстур
+      const allFixtures = generateFixtures(100)
+      const fixture = allFixtures.listings.find(l => l.id === id)
+      
+      if (fixture) {
+        return {
+          ...fixture,
+          description: 'Это фикстурное объявление для тестирования. Отличное состояние, полный комплект, гарантия.',
+          images: fixture.images.map((img) => ({
+            ...img,
+            url: img.url.replace('400/300', '600/400') // Более крупное изображение для детальной страницы
+          }))
+        }
+      }
+      
+      // Если не найдено - возвращаем дефолтное
       return {
         id,
-        title: 'iPhone 15 Pro Max (Fixture)',
+        title: 'Объявление (Fixture)',
         description: 'Это фикстурное объявление для тестирования. Отличное состояние, полный комплект, гарантия.',
-        price: 150000,
+        price: 50000,
         currency: 'RUB',
         images: [
           { url: 'https://picsum.photos/600/400?random=fixture1', position: 0 },
@@ -189,6 +234,91 @@ export const api = {
       headers: {
         'Content-Type': file.type
       }
+    })
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+  },
+
+  // Поиск объявлений
+  async searchListings(params: SearchListingsRequest): Promise<SearchListingsResponse> {
+    if (USE_FIXTURES) {
+      await new Promise(resolve => setTimeout(resolve, 300))
+      // Фильтруем фикстуры по query
+      const allFixtures = generateFixtures(100)
+      let filtered = allFixtures.listings
+      
+      if (params.query) {
+        const query = params.query.toLowerCase()
+        filtered = filtered.filter(l => 
+          l.title.toLowerCase().includes(query) || 
+          l.description.toLowerCase().includes(query)
+        )
+      }
+      
+      if (params.minPrice !== undefined) {
+        filtered = filtered.filter(l => l.price >= params.minPrice!)
+      }
+      
+      if (params.maxPrice !== undefined) {
+        filtered = filtered.filter(l => l.price <= params.maxPrice!)
+      }
+      
+      const limit = params.limit || 20
+      const sliced = filtered.slice(0, limit)
+      
+      return {
+        listings: sliced,
+        nextCursor: sliced.length < filtered.length ? String(limit) : null
+      }
+    }
+
+    const queryParams = new URLSearchParams()
+    if (params.query) queryParams.set('q', params.query)
+    if (params.cursor) queryParams.set('cursor', params.cursor)
+    if (params.limit) queryParams.set('limit', params.limit.toString())
+    if (params.minPrice) queryParams.set('minPrice', params.minPrice.toString())
+    if (params.maxPrice) queryParams.set('maxPrice', params.maxPrice.toString())
+
+    const response = await fetch(`${API_BASE}/search?${queryParams.toString()}`)
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    return response.json()
+  },
+
+  // Обновление объявления
+  async updateListing(id: string, data: UpdateListingRequest): Promise<UpdateListingResponse> {
+    if (USE_FIXTURES) {
+      await new Promise(resolve => setTimeout(resolve, 500))
+      return {
+        id,
+        updatedAt: new Date().toISOString()
+      }
+    }
+
+    const response = await fetch(`${API_BASE}/listings/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    })
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    return response.json()
+  },
+
+  // Удаление объявления
+  async deleteListing(id: string): Promise<void> {
+    if (USE_FIXTURES) {
+      await new Promise(resolve => setTimeout(resolve, 300))
+      return
+    }
+
+    const response = await fetch(`${API_BASE}/listings/${id}`, {
+      method: 'DELETE'
     })
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)

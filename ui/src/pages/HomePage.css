@@ -13,6 +13,15 @@
   position: sticky;
   top: 0;
   z-index: 100;
+  gap: 16px;
+}
+
+.home-page__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  justify-content: flex-end;
 }
 
 .home-page__title {
@@ -68,6 +77,77 @@
   background: #aa0000;
 }
 
+.home-page__search-info {
+  max-width: 1400px;
+  margin: 16px auto 0;
+  padding: 12px 20px;
+  background: #e8f5e9;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.home-page__search-info span {
+  color: #2e7d32;
+  font-size: 14px;
+}
+
+.home-page__search-info strong {
+  font-weight: 700;
+}
+
+.home-page__clear-search {
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid #2e7d32;
+  color: #2e7d32;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.home-page__clear-search:hover {
+  background: #2e7d32;
+  color: #fff;
+}
+
+.home-page__empty {
+  max-width: 400px;
+  margin: 60px auto;
+  padding: 40px;
+  background: #fff;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.home-page__empty p {
+  color: #666;
+  font-size: 16px;
+  margin: 0 0 20px 0;
+}
+
+.home-page__clear-search-btn {
+  padding: 10px 20px;
+  background: #00a51a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.home-page__clear-search-btn:hover {
+  background: #008a15;
+}
+
 @media (max-width: 768px) {
   .home-page__header {
     flex-direction: column;
@@ -75,8 +155,18 @@
     text-align: center;
   }
 
+  .home-page__actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
   .home-page__title {
     font-size: 20px;
+  }
+
+  .home-page__search-info {
+    flex-direction: column;
+    text-align: center;
   }
 }
 
@@ -99,5 +189,31 @@
 
   .home-page__error p {
     color: #ff6666;
+  }
+
+  .home-page__search-info {
+    background: #1b331d;
+  }
+
+  .home-page__search-info span {
+    color: #81c784;
+  }
+
+  .home-page__clear-search {
+    border-color: #81c784;
+    color: #81c784;
+  }
+
+  .home-page__clear-search:hover {
+    background: #81c784;
+    color: #1a1a1a;
+  }
+
+  .home-page__empty {
+    background: #2a2a2a;
+  }
+
+  .home-page__empty p {
+    color: #aaa;
   }
 }

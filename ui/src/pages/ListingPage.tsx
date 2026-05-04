@@ -11,6 +11,7 @@ function ListingPage() {
   const [listing, setListing] = useState<ListingResponse | null>(null)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -52,6 +53,21 @@ function ListingPage() {
       hour: '2-digit',
       minute: '2-digit'
     })
+  }
+
+  const handleDelete = async () => {
+    if (!confirm('Вы уверены, что хотите удалить это объявление?')) return
+
+    setIsDeleting(true)
+    setError(null)
+
+    try {
+      await api.deleteListing(id!)
+      navigate('/')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ошибка удаления')
+      setIsDeleting(false)
+    }
   }
 
   if (isLoading) {
@@ -140,6 +156,18 @@ function ListingPage() {
             <button className="listing-page__contact-btn">
               Показать контакты
             </button>
+            <div className="listing-page__manage-actions">
+              <Link to={`/listing/${id}/edit`} className="listing-page__edit-btn">
+                ✏️ Редактировать
+              </Link>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="listing-page__delete-btn"
+              >
+                {isDeleting ? 'Удаление...' : '🗑️ Удалить'}
+              </button>
+            </div>
           </div>
         </div>
       </main>
