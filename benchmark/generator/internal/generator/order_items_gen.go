@@ -1,12 +1,11 @@
 package generator
 
 import (
+	"benchmark/generator/internal/model"
+	"benchmark/generator/internal/writer"
 	"fmt"
 	"math/rand"
 	"time"
-
-	"benchmark/generator/internal/model"
-	"benchmark/generator/internal/writer"
 )
 
 func (g *Generator) GenerateOrderItems() error {
@@ -21,6 +20,8 @@ func (g *Generator) GenerateOrderItems() error {
 	defer itemsFile.Close()
 
 	batch := make([][]string, 0, g.cfg.BatchSize)
+
+	g.orderItems = make([]model.OrderItem, 0, g.cfg.OrderItems)
 
 	g.orderItems = make([]model.OrderItem, 0, g.cfg.OrderItems)
 
@@ -88,7 +89,7 @@ func (g *Generator) GenerateOrderItems() error {
 	g.fixOrderTotals(orderTotals)
 
 	fmt.Printf("✅ ORDER_ITEMS done in %s (%d rows)\n",
-		time.Since(start), g.cfg.OrderItems)
+		time.Since(start), len(g.orderItems))
 
 	return nil
 }

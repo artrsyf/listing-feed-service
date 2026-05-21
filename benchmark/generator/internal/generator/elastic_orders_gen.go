@@ -1,12 +1,10 @@
 package generator
 
 import (
+	"benchmark/generator/internal/writer"
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"time"
-
-	"benchmark/generator/internal/writer"
 )
 
 func (g *Generator) GenerateElasticOrders() error {
@@ -19,6 +17,8 @@ func (g *Generator) GenerateElasticOrders() error {
 		return err
 	}
 	defer nd.Close()
+
+	docCount := 0
 
 	for _, order := range g.orders {
 
@@ -52,12 +52,19 @@ func (g *Generator) GenerateElasticOrders() error {
 		if err := nd.WriteBulkItem("index", string(b)); err != nil {
 			return err
 		}
+
+		docCount++
+
+		// Progress indicator
+		if docCount%100000 == 0 {
+			fmt.Printf("  Generated %d documents...\n", docCount)
+		}
 	}
 
 	nd.Flush()
 
 	fmt.Printf("✅ ELASTIC ORDERS done in %s (%d docs)\n",
-		time.Since(start), len(g.orders))
+		time.Since(start), docCount)
 
 	return nil
 }

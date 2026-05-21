@@ -14,7 +14,11 @@ type Generator struct {
 	writer *writer.FileWriter
 
 	// cached datasets (populated sequentially)
-	users []model.User
+	users      []model.User
+	categories []model.Category
+	products   []model.Product
+	orders     []model.Order
+	orderItems []model.OrderItem
 }
 
 func NewGenerator(cfg *config.Config, w *writer.FileWriter) *Generator {

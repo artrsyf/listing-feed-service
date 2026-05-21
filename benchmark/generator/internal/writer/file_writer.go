@@ -1,10 +1,12 @@
 package writer
 
+import (
+	"path/filepath"
+)
+
+// FileWriter manages output file creation for different data formats
 type FileWriter struct {
 	OutputDir string
-
-	CSV    *CSVWriter
-	NDJSON *NDJSONWriter
 }
 
 func NewFileWriter(dir string) *FileWriter {
@@ -13,38 +15,17 @@ func NewFileWriter(dir string) *FileWriter {
 	}
 }
 
-func (f *FileWriter) InitPostgres() error {
-	users, _ := NewCSVWriter(f.OutputDir, "users.csv")
-	orders, _ := NewCSVWriter(f.OutputDir, "orders.csv")
-	items, _ := NewCSVWriter(f.OutputDir, "order_items.csv")
-	products, _ := NewCSVWriter(f.OutputDir, "products.csv")
-	categories, _ := NewCSVWriter(f.OutputDir, "categories.csv")
-
-	f.CSV = users // placeholder pattern (will refactor per table later)
-
-	_ = orders
-	_ = items
-	_ = products
-	_ = categories
-
-	return nil
+// CSVPath returns full path for a CSV file
+func (f *FileWriter) CSVPath(filename string) string {
+	return filepath.Join(f.OutputDir, filename+".csv")
 }
 
-func (f *FileWriter) InitElastic() error {
-	nd, err := NewNDJSONWriter(f.OutputDir, "orders.ndjson")
-	if err != nil {
-		return err
-	}
-
-	f.NDJSON = nd
-	return nil
+// NDJSONPath returns full path for an NDJSON file
+func (f *FileWriter) NDJSONPath(filename string) string {
+	return filepath.Join(f.OutputDir, filename+".ndjson")
 }
 
+// Close is a no-op for FileWriter (individual writers manage their own lifecycle)
 func (f *FileWriter) Close() {
-	if f.CSV != nil {
-		f.CSV.Close()
-	}
-	if f.NDJSON != nil {
-		f.NDJSON.Close()
-	}
+	// Individual writers are closed by their creators
 }

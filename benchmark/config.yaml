@@ -1,0 +1,18 @@
+# Benchmark data generation config
+
+# Dataset sizes
+users: 1000000        # 1M users
+orders: 10000000      # 10M orders  
+order_items: 50000000 # 50M order items
+products: 1000000     # 1M products
+categories: 10000     # 10K categories
+
+# Batch settings
+batch_size: 50000
+workers: 8
+
+# Time range for generated data (days)
+time_range_days: 365
+
+# Random seed for reproducibility
+seed: 42

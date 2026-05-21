@@ -1,13 +1,12 @@
 package generator
 
 import (
+	"benchmark/generator/internal/model"
+	"benchmark/generator/internal/writer"
 	"fmt"
 	"math"
 	"math/rand"
 	"time"
-
-	"benchmark/generator/internal/model"
-	"benchmark/generator/internal/writer"
 )
 
 func (g *Generator) GenerateProducts() error {
@@ -92,7 +91,7 @@ func skewedPrice() float64 {
 func skewedRating() float64 {
 	r := rand.Float64()
 
-	// bias towards 3–5 stars
+	// bias towards 3-5 stars
 	rating := 1 + math.Pow(r, 0.5)*4
 
 	if rating > 5 {

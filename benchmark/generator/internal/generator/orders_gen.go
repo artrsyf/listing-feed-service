@@ -1,12 +1,11 @@
 package generator
 
 import (
+	"benchmark/generator/internal/model"
+	"benchmark/generator/internal/writer"
 	"fmt"
 	"math/rand"
 	"time"
-
-	"benchmark/generator/internal/model"
-	"benchmark/generator/internal/writer"
 )
 
 func (g *Generator) GenerateOrders() error {

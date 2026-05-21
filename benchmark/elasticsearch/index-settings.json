@@ -1,0 +1,59 @@
+{
+  "settings": {
+    "number_of_shards": 2,
+    "number_of_replicas": 0,
+    
+    "refresh_interval": "30s",
+    
+    "index.translog.durability": "async",
+    "index.translog.sync_interval": "5s",
+    
+    "merge.scheduler.max_thread_count": 1,
+    
+    "codec": "best_compression"
+  },
+  "mappings": {
+    "properties": {
+      "order_id": {
+        "type": "long"
+      },
+      "user": {
+        "properties": {
+          "id": {
+            "type": "long"
+          },
+          "country": {
+            "type": "keyword"
+          },
+          "status": {
+            "type": "integer"
+          }
+        }
+      },
+      "created_at": {
+        "type": "date",
+        "format": "strict_date_optional_time||epoch_millis"
+      },
+      "items": {
+        "type": "nested",
+        "properties": {
+          "product_id": {
+            "type": "long"
+          },
+          "category_id": {
+            "type": "long"
+          },
+          "price": {
+            "type": "double"
+          },
+          "quantity": {
+            "type": "integer"
+          }
+        }
+      },
+      "total_amount": {
+        "type": "double"
+      }
+    }
+  }
+}
