@@ -1,0 +1,137 @@
+version: '3.9'
+
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: benchmark-postgres
+
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: benchmark
+      POSTGRES_USER: benchmark
+      POSTGRES_PASSWORD: benchmark
+
+    ports:
+      - "5432:5432"
+
+    command:
+      [
+        "postgres",
+        "-c", "shared_buffers=4GB",
+        "-c", "work_mem=64MB",
+        "-c", "maintenance_work_mem=1GB",
+        "-c", "effective_cache_size=12GB",
+        "-c", "max_parallel_workers=16",
+        "-c", "max_parallel_workers_per_gather=8",
+        "-c", "random_page_cost=1.1",
+        "-c", "effective_io_concurrency=200",
+        "-c", "wal_compression=on",
+        "-c", "checkpoint_timeout=30min",
+        "-c", "max_wal_size=8GB"
+      ]
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
+      - ./postgres/config:/etc/postgresql/custom
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U benchmark"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+    networks:
+      - benchmark-network
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    container_name: benchmark-elasticsearch
+
+    restart: unless-stopped
+
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+
+      - ES_JAVA_OPTS=-Xms4g -Xmx4g
+
+      - bootstrap.memory_lock=true
+
+      - thread_pool.search.size=32
+      - thread_pool.search.queue_size=2000
+
+      - indices.memory.index_buffer_size=20%
+
+      - cluster.routing.allocation.disk.threshold_enabled=false
+
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+
+    ports:
+      - "9200:9200"
+
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200 >/dev/null"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+
+    networks:
+      - benchmark-network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.13.4
+    container_name: benchmark-kibana
+
+    restart: unless-stopped
+
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+
+    ports:
+      - "5601:5601"
+
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+    networks:
+      - benchmark-network
+
+  benchmark-runner:
+    image: golang:1.23
+
+    container_name: benchmark-runner
+
+    working_dir: /app
+
+    volumes:
+      - ./:/app
+
+    tty: true
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+      elasticsearch:
+        condition: service_healthy
+
+    networks:
+      - benchmark-network
+
+volumes:
+  postgres_data:
+  elasticsearch_data:
+
+networks:
+  benchmark-network:
+    driver: bridge
