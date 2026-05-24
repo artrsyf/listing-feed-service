@@ -1,0 +1,10 @@
+# Medium dataset intended for a 16GB RAM developer machine.
+users: 100000
+orders: 500000
+order_items: 1500000
+products: 100000
+categories: 5000
+batch_size: 25000
+workers: 4
+time_range_days: 365
+seed: 42

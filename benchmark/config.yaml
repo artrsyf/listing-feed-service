@@ -1,15 +1,16 @@
 # Benchmark data generation config
 
-# Dataset sizes
-users: 1000000        # 1M users
-orders: 10000000      # 10M orders  
-order_items: 50000000 # 50M order items
-products: 1000000     # 1M products
-categories: 10000     # 10K categories
+# Dataset sizes for a local benchmark run.
+# Increase these values or use your own config for long runs.
+users: 10000
+orders: 50000
+order_items: 150000
+products: 10000
+categories: 1000
 
 # Batch settings
-batch_size: 50000
-workers: 8
+batch_size: 10000
+workers: 4
 
 # Time range for generated data (days)
 time_range_days: 365

@@ -68,6 +68,9 @@ func (c *Config) validate() error {
 	if c.OrderItems <= 0 {
 		return fmt.Errorf("order_items must be > 0")
 	}
+	if c.OrderItems < c.Orders {
+		return fmt.Errorf("order_items must be >= orders so every order can have at least one item")
+	}
 	if c.Products <= 0 {
 		return fmt.Errorf("products must be > 0")
 	}

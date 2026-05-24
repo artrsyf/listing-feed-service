@@ -12,7 +12,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"benchmark/benchmark"
@@ -24,11 +23,12 @@ import (
 func main() {
 	// flags
 	generate := flag.Bool("generate", false, "Generate test data only")
+	initElasticIndex := flag.Bool("init-elastic", false, "Create Elasticsearch index")
 	load := flag.Bool("load", false, "Load data into databases")
 	runBenchmark := flag.Bool("benchmark", false, "Run benchmarks")
 
-	postgresDSN := flag.String("postgres", "postgres://benchmark:benchmark@localhost:5432/benchmark?sslmode=disable", "PostgreSQL DSN")
-	elasticURL := flag.String("elastic", "http://localhost:9200", "Elasticsearch URL")
+	postgresDSN := flag.String("postgres", envOrDefault("POSTGRES_DSN", "postgres://benchmark:benchmark@localhost:5432/benchmark?sslmode=disable"), "PostgreSQL DSN")
+	elasticURL := flag.String("elastic", envOrDefault("ELASTIC_URL", "http://localhost:9200"), "Elasticsearch URL")
 
 	workers := flag.Int("workers", 8, "Number of concurrent workers")
 	iterations := flag.Int("iterations", 1000, "Number of query iterations per scenario")
@@ -40,6 +40,12 @@ func main() {
 	if *generate {
 		fmt.Println("📊 Data generation should be run via generator/cmd/main.go")
 		fmt.Println("   Usage: go run generator/cmd/main.go -config config.yaml -out ./output")
+	}
+
+	if *initElasticIndex {
+		if err := initElastic(ctx, *elasticURL); err != nil {
+			log.Fatalf("Failed to initialize Elasticsearch: %v", err)
+		}
 	}
 
 	if *load {
@@ -54,7 +60,7 @@ func main() {
 		}
 	}
 
-	if !*generate && !*load && !*runBenchmark {
+	if !*generate && !*initElasticIndex && !*load && !*runBenchmark {
 		fmt.Println("Usage: benchmark [-generate] [-load] [-benchmark] [flags]")
 		fmt.Println()
 		fmt.Println("Options:")
@@ -86,6 +92,51 @@ func loadData(ctx context.Context, postgresDSN, elasticURL string) error {
 	return nil
 }
 
+func initElastic(ctx context.Context, url string) error {
+	fmt.Println("Initializing Elasticsearch index...")
+
+	settings, err := os.ReadFile("elasticsearch/index-settings.json")
+	if err != nil {
+		return fmt.Errorf("read index settings: %w", err)
+	}
+
+	client := &http.Client{Timeout: 30 * time.Second}
+
+	deleteReq, err := http.NewRequestWithContext(ctx, "DELETE", url+"/orders", nil)
+	if err != nil {
+		return err
+	}
+	deleteResp, err := client.Do(deleteReq)
+	if err != nil {
+		return err
+	}
+	io.Copy(io.Discard, deleteResp.Body)
+	deleteResp.Body.Close()
+
+	putReq, err := http.NewRequestWithContext(ctx, "PUT", url+"/orders", bytes.NewReader(settings))
+	if err != nil {
+		return err
+	}
+	putReq.Header.Set("Content-Type", "application/json")
+
+	putResp, err := client.Do(putReq)
+	if err != nil {
+		return err
+	}
+	defer putResp.Body.Close()
+
+	body, err := io.ReadAll(putResp.Body)
+	if err != nil {
+		return err
+	}
+	if putResp.StatusCode < 200 || putResp.StatusCode >= 300 {
+		return fmt.Errorf("create index failed: %s - %s", putResp.Status, string(body))
+	}
+
+	fmt.Println("Elasticsearch index is ready")
+	return nil
+}
+
 func loadPostgres(ctx context.Context, dsn string) error {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
@@ -97,85 +148,57 @@ func loadPostgres(ctx context.Context, dsn string) error {
 		return err
 	}
 
-	// Load data using COPY
-	tables := []string{"categories", "users", "products", "orders", "order_items"}
+	if _, err := db.ExecContext(ctx, "TRUNCATE order_items, orders, products, categories, users RESTART IDENTITY CASCADE"); err != nil {
+		return fmt.Errorf("truncate postgres tables: %w", err)
+	}
 
-	for _, table := range tables {
-		fmt.Printf("  Loading %s...\n", table)
+	loads := []struct {
+		table   string
+		columns string
+		file    string
+	}{
+		{"categories", "id, parent_id, name, created_at", "/data/categories.csv"},
+		{"users", "id, email, country, status, created_at", "/data/users.csv"},
+		{"products", "id, category_id, sku, name, price, rating, created_at", "/data/products.csv"},
+		{"orders", "id, user_id, status, total_amount, created_at", "/data/orders.csv"},
+		{"order_items", "id, order_id, product_id, quantity, price, created_at", "/data/order_items.csv"},
+	}
 
-		filePath := fmt.Sprintf("./output/%s.csv", table)
+	for _, load := range loads {
+		fmt.Printf("  Loading %s...\n", load.table)
 
-		file, err := os.Open(filePath)
-		if err != nil {
-			return fmt.Errorf("open %s: %w", table, err)
+		query := fmt.Sprintf("COPY %s (%s) FROM '%s' WITH (FORMAT csv, NULL '\\N')", load.table, load.columns, load.file)
+		if _, err := db.ExecContext(ctx, query); err != nil {
+			return fmt.Errorf("copy %s: %w", load.table, err)
 		}
+	}
 
-		// Use COPY FROM STDIN
-		txn, err := db.Begin()
-		if err != nil {
-			file.Close()
-			return err
-		}
+	if _, err := db.ExecContext(ctx, `
+		UPDATE orders o
+		SET total_amount = totals.total_amount
+		FROM (
+			SELECT order_id, SUM(quantity * price)::numeric(14,2) AS total_amount
+			FROM order_items
+			GROUP BY order_id
+		) totals
+		WHERE o.id = totals.order_id
+	`); err != nil {
+		return fmt.Errorf("update order totals: %w", err)
+	}
 
-		stmt, err := txn.PrepareContext(ctx, fmt.Sprintf("COPY %s FROM STDIN WITH (FORMAT csv)", table))
-		if err != nil {
-			txn.Rollback()
-			file.Close()
-			return err
-		}
-
-		scanner := bufio.NewScanner(file)
-		for scanner.Scan() {
-			line := scanner.Text()
-			if strings.TrimSpace(line) == "" {
-				continue
-			}
-
-			fields := strings.Split(line, ",")
-			args := make([]interface{}, len(fields))
-			for i, f := range fields {
-				if f == "\\N" {
-					args[i] = nil
-				} else {
-					args[i] = f
-				}
-			}
-
-			if _, err := stmt.Exec(args...); err != nil {
-				stmt.Close()
-				txn.Rollback()
-				file.Close()
-				return err
-			}
-		}
-
-		if err := scanner.Err(); err != nil {
-			stmt.Close()
-			txn.Rollback()
-			file.Close()
-			return err
-		}
-
-		if _, err := stmt.Exec(); err != nil {
-			stmt.Close()
-			txn.Rollback()
-			file.Close()
-			return err
-		}
-
-		stmt.Close()
-
-		if err := txn.Commit(); err != nil {
-			file.Close()
-			return err
-		}
-
-		file.Close()
+	if _, err := db.ExecContext(ctx, `
+		SELECT setval('users_id_seq', COALESCE((SELECT MAX(id) FROM users), 1), true);
+		SELECT setval('categories_id_seq', COALESCE((SELECT MAX(id) FROM categories), 1), true);
+		SELECT setval('products_id_seq', COALESCE((SELECT MAX(id) FROM products), 1), true);
+		SELECT setval('orders_id_seq', COALESCE((SELECT MAX(id) FROM orders), 1), true);
+		SELECT setval('order_items_id_seq', COALESCE((SELECT MAX(id) FROM order_items), 1), true);
+	`); err != nil {
+		return fmt.Errorf("reset sequences: %w", err)
 	}
 
 	// Analyze tables
 	fmt.Println("  Running ANALYZE...")
-	if _, err := db.Exec("ANALYZE"); err != nil {
+	if _, err := db.ExecContext(ctx, "ANALYZE"); err != nil {
 		return err
 	}
 
@@ -210,7 +233,9 @@ func loadElastic(ctx context.Context, url string) error {
 				return err
 			}
 			totalIndexed += lineCount / 2
-			fmt.Printf("  Indexed %d documents...\n", totalIndexed)
+			if totalIndexed%50000 == 0 {
+				fmt.Printf("  Indexed %d documents...\n", totalIndexed)
+			}
 			bulkBody.Reset()
 			lineCount = 0
 		}
@@ -237,7 +262,7 @@ func loadElastic(ctx context.Context, url string) error {
 }
 
 func sendBulk(ctx context.Context, client *http.Client, url string, body []byte) error {
-	req, err := http.NewRequestWithContext(ctx, "POST", url+"/_bulk", bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, "POST", url+"/orders/_bulk", bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
@@ -252,6 +277,20 @@ func sendBulk(ctx context.Context, client *http.Client, url string, body []byte)
 	if resp.StatusCode != 200 {
 		respBody, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("bulk index failed: %s - %s", resp.Status, string(respBody))
+	}
+
+	var result struct {
+		Errors bool `json:"errors"`
+	}
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		return err
+	}
+	if result.Errors {
+		return fmt.Errorf("bulk index completed with item errors")
 	}
 
 	return nil
@@ -270,7 +309,7 @@ func runBenchmarks(postgresDSN, elasticURL string, workers, iterations int) erro
 	pgExecutor := executors.NewPostgresExecutor(db)
 	elasticExecutor := executors.NewElasticExecutor(elasticURL)
 
-	runner := benchmark.NewRunner(pgExecutor, elasticExecutor, workers)
+	runner := benchmark.NewRunner(pgExecutor, elasticExecutor, workers, iterations)
 
 	// =======================
 	// JOIN SCENARIOS (PostgreSQL)
@@ -349,4 +388,12 @@ func runBenchmarks(postgresDSN, elasticURL string, workers, iterations int) erro
 	runner.Report()
 
 	return nil
+}
+
+func envOrDefault(key, fallback string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
+	}
+	return value
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"time"
 )
 
 func (g *Generator) GenerateElasticOrders() error {
@@ -22,7 +23,7 @@ func (g *Generator) GenerateElasticOrders() error {
 
 	for _, order := range g.orders {
 
-		user := g.users[randomIndex(len(g.users))]
+		user := g.users[int(order.UserID)-1]
 
 		items := g.buildElasticItems(order.ID)
 

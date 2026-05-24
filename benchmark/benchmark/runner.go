@@ -11,7 +11,8 @@ type Runner struct {
 	postgres Executor
 	elastic  Executor
 
-	workers int
+	workers    int
+	iterations int
 
 	metrics *Metrics
 }
@@ -20,12 +21,24 @@ type Executor interface {
 	RunQuery(ctx context.Context, query string) (time.Duration, error)
 }
 
-func NewRunner(pg Executor, elastic Executor, workers int) *Runner {
+type joinModeSetter interface {
+	SetJoinMode(mode string)
+}
+
+func NewRunner(pg Executor, elastic Executor, workers int, iterations int) *Runner {
+	if workers < 1 {
+		workers = 1
+	}
+	if iterations < 1 {
+		iterations = 1
+	}
+
 	return &Runner{
-		postgres: pg,
-		elastic:  elastic,
-		workers:  workers,
-		metrics:  NewMetrics(),
+		postgres:   pg,
+		elastic:    elastic,
+		workers:    workers,
+		iterations: iterations,
+		metrics:    NewMetrics(),
 	}
 }
 
@@ -33,7 +46,8 @@ func (r *Runner) RunScenario(name string, queries []string, executor string) {
 	fmt.Printf("▶ Running scenario: %s (executor: %s)\n", name, executor)
 
 	var wg sync.WaitGroup
-	jobs := make(chan string, len(queries))
+	totalJobs := len(queries) * r.iterations
+	jobs := make(chan string, totalJobs)
 
 	startTime := time.Now()
 
@@ -65,8 +79,10 @@ func (r *Runner) RunScenario(name string, queries []string, executor string) {
 	}
 
 	// send jobs
-	for _, q := range queries {
-		jobs <- q
+	for i := 0; i < r.iterations; i++ {
+		for _, q := range queries {
+			jobs <- q
+		}
 	}
 
 	close(jobs)
@@ -136,7 +152,7 @@ var AggregationScenario = []string{
 }
 
 var ElasticAggScenario = []string{
-	`{"size":0,"aggs":{"by_country":{"terms":{"field":"user.country.keyword","size":100}}}}`,
+	`{"size":0,"aggs":{"by_country":{"terms":{"field":"user.country","size":100}}}}`,
 }
 
 var ElasticRangeScenario = []string{
@@ -144,7 +160,7 @@ var ElasticRangeScenario = []string{
 }
 
 var ElasticSearchScenario = []string{
-	`{"query":{"match":{"user.country":"US"}}}`,
+	`{"query":{"term":{"user.country":"US"}}}`,
 }
 
 // =======================
@@ -152,21 +168,25 @@ var ElasticSearchScenario = []string{
 // =======================
 
 func SetHashJoin(pg Executor) {
-	pg.RunQuery(context.Background(),
-		"SET enable_hashjoin = on; SET enable_mergejoin = off; SET enable_nestloop = off;")
+	if setter, ok := pg.(joinModeSetter); ok {
+		setter.SetJoinMode("hash")
+	}
 }
 
 func SetMergeJoin(pg Executor) {
-	pg.RunQuery(context.Background(),
-		"SET enable_mergejoin = on; SET enable_hashjoin = off; SET enable_nestloop = off;")
+	if setter, ok := pg.(joinModeSetter); ok {
+		setter.SetJoinMode("merge")
+	}
 }
 
 func SetNestedLoop(pg Executor) {
-	pg.RunQuery(context.Background(),
-		"SET enable_nestloop = on; SET enable_hashjoin = off; SET enable_mergejoin = off;")
+	if setter, ok := pg.(joinModeSetter); ok {
+		setter.SetJoinMode("nested_loop")
+	}
 }
 
 func SetDefaultJoin(pg Executor) {
-	pg.RunQuery(context.Background(),
-		"SET enable_hashjoin = on; SET enable_mergejoin = on; SET enable_nestloop = on;")
+	if setter, ok := pg.(joinModeSetter); ok {
+		setter.SetJoinMode("")
+	}
 }

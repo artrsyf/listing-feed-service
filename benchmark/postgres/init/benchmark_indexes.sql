@@ -66,10 +66,11 @@ CREATE INDEX IF NOT EXISTS idx_order_items_created_at_brin
 -- PARTIAL INDEXES (for filtered queries)
 -- =========================================================
 
--- Partial index for recent orders (last 90 days)
-CREATE INDEX IF NOT EXISTS idx_orders_recent
-    ON orders (created_at) 
-    WHERE created_at > NOW() - interval '90 days';
+-- Partial index for hot order statuses. Relative time predicates such as NOW()
+-- are not immutable and cannot be used safely in PostgreSQL index predicates.
+CREATE INDEX IF NOT EXISTS idx_orders_paid_recent_path
+    ON orders (created_at)
+    WHERE status IN (1, 2, 3);
 
 -- Partial index for active products
 CREATE INDEX IF NOT EXISTS idx_products_active
@@ -101,8 +102,8 @@ ANALYZE;
 
 SELECT 
     schemaname,
-    tablename,
-    indexname,
+    relname as tablename,
+    indexrelname as indexname,
     pg_size_pretty(pg_relation_size(indexrelid)) as index_size
 FROM pg_stat_user_indexes
 WHERE schemaname = 'public'

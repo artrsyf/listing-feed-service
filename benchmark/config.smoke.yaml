@@ -1,0 +1,10 @@
+# Small dataset used by `make smoke` and CI-style verification.
+users: 100
+orders: 500
+order_items: 1500
+products: 100
+categories: 20
+batch_size: 500
+workers: 2
+time_range_days: 365
+seed: 42

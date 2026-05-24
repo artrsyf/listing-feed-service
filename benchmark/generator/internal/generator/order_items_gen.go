@@ -1,7 +1,6 @@
 package generator
 
 import (
-	"benchmark/generator/internal/model"
 	"benchmark/generator/internal/writer"
 	"fmt"
 	"math/rand"
@@ -21,18 +20,27 @@ func (g *Generator) GenerateOrderItems() error {
 
 	batch := make([][]string, 0, g.cfg.BatchSize)
 
-	g.orderItems = make([]model.OrderItem, 0, g.cfg.OrderItems)
-
-	g.orderItems = make([]model.OrderItem, 0, g.cfg.OrderItems)
-
 	itemID := int64(1)
 
 	// reset order totals (we recompute correctly here)
 	orderTotals := make(map[int64]float64, len(g.orders))
 
-	for _, order := range g.orders {
+	remaining := g.cfg.OrderItems
+
+	for orderIndex, order := range g.orders {
+		ordersLeft := len(g.orders) - orderIndex - 1
 
 		itemCount := sampleItemsPerOrder()
+		maxForOrder := remaining - ordersLeft
+		if itemCount > maxForOrder {
+			itemCount = maxForOrder
+		}
+		if itemCount < 1 {
+			itemCount = 1
+		}
+		if ordersLeft == 0 {
+			itemCount = remaining
+		}
 
 		for i := 0; i < itemCount; i++ {
 
@@ -43,29 +51,19 @@ func (g *Generator) GenerateOrderItems() error {
 
 			total := float64(qty) * price
 
-			oi := model.OrderItem{
-				ID:        itemID,
-				OrderID:   order.ID,
-				ProductID: product.ID,
-				Quantity:  qty,
-				Price:     price,
-				CreatedAt: order.CreatedAt,
-			}
-
-			g.orderItems = append(g.orderItems, oi)
-
 			orderTotals[order.ID] += total
 
 			batch = append(batch, []string{
-				fmt.Sprint(oi.ID),
-				fmt.Sprint(oi.OrderID),
-				fmt.Sprint(oi.ProductID),
-				fmt.Sprint(oi.Quantity),
-				fmt.Sprintf("%.2f", oi.Price),
-				oi.CreatedAt.Format(time.RFC3339),
+				fmt.Sprint(itemID),
+				fmt.Sprint(order.ID),
+				fmt.Sprint(product.ID),
+				fmt.Sprint(qty),
+				fmt.Sprintf("%.2f", price),
+				order.CreatedAt.Format(time.RFC3339),
 			})
 
 			itemID++
+			remaining--
 
 			if len(batch) >= g.cfg.BatchSize {
 				if err := itemsFile.WriteBatch(batch); err != nil {
@@ -89,7 +87,7 @@ func (g *Generator) GenerateOrderItems() error {
 	g.fixOrderTotals(orderTotals)
 
 	fmt.Printf("✅ ORDER_ITEMS done in %s (%d rows)\n",
-		time.Since(start), len(g.orderItems))
+		time.Since(start), g.cfg.OrderItems)
 
 	return nil
 }

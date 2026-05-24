@@ -1,0 +1,10 @@
+# Example large dataset. Expect this to require substantial time, RAM and disk.
+users: 1000000
+orders: 10000000
+order_items: 50000000
+products: 1000000
+categories: 10000
+batch_size: 50000
+workers: 8
+time_range_days: 365
+seed: 42
