@@ -1,0 +1,6 @@
+# Photo storage benchmark dataset for a quick local run.
+photos: 5000
+avg_size_kb: 128
+size_jitter_pct: 25
+batch_size: 100
+seed: 42

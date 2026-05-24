@@ -1,0 +1,7 @@
+# Marketplace/listing read-model dataset for a 16GB RAM developer machine.
+listings: 300000
+sellers: 50000
+categories: 2000
+batch_size: 25000
+time_range_days: 180
+seed: 42

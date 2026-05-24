@@ -25,7 +25,18 @@ func main() {
 	generate := flag.Bool("generate", false, "Generate test data only")
 	initElasticIndex := flag.Bool("init-elastic", false, "Create Elasticsearch index")
 	load := flag.Bool("load", false, "Load data into databases")
+	loadPostgresOnly := flag.Bool("load-postgres", false, "Load generated order data into PostgreSQL only")
 	runBenchmark := flag.Bool("benchmark", false, "Run benchmarks")
+	generateListings := flag.Bool("generate-listings", false, "Generate marketplace listings dataset")
+	initListings := flag.Bool("init-listings", false, "Create marketplace PostgreSQL schema and Elasticsearch index")
+	loadListings := flag.Bool("load-listings", false, "Load marketplace listings dataset")
+	benchmarkListings := flag.Bool("benchmark-listings", false, "Run marketplace listings read benchmark")
+	listingsConfig := flag.String("listings-config", "config.listing.yaml", "Marketplace listings config")
+	initPhotoStorage := flag.Bool("init-photos", false, "Create photo storage schemas/buckets")
+	loadPhotoStorage := flag.Bool("load-photos", false, "Load photo payloads into PostgreSQL and MinIO")
+	benchmarkPhotoStorage := flag.Bool("benchmark-photos", false, "Run photo storage benchmark")
+	photosConfig := flag.String("photos-config", "config.photos.yaml", "Photo storage benchmark config")
+	benchmarkIndexJoins := flag.Bool("benchmark-index-joins", false, "Run isolated PostgreSQL index and join benchmark")
 
 	postgresDSN := flag.String("postgres", envOrDefault("POSTGRES_DSN", "postgres://benchmark:benchmark@localhost:5432/benchmark?sslmode=disable"), "PostgreSQL DSN")
 	elasticURL := flag.String("elastic", envOrDefault("ELASTIC_URL", "http://localhost:9200"), "Elasticsearch URL")
@@ -54,13 +65,67 @@ func main() {
 		}
 	}
 
+	if *loadPostgresOnly {
+		if err := loadPostgres(ctx, *postgresDSN); err != nil {
+			log.Fatalf("Failed to load PostgreSQL data: %v", err)
+		}
+	}
+
 	if *runBenchmark {
 		if err := runBenchmarks(*postgresDSN, *elasticURL, *workers, *iterations); err != nil {
 			log.Fatalf("Benchmark failed: %v", err)
 		}
 	}
 
-	if !*generate && !*initElasticIndex && !*load && !*runBenchmark {
+	if *generateListings {
+		if err := generateListingData(*listingsConfig, "./output"); err != nil {
+			log.Fatalf("Listing generation failed: %v", err)
+		}
+	}
+
+	if *initListings {
+		if err := initListingElastic(ctx, *elasticURL); err != nil {
+			log.Fatalf("Listing Elasticsearch init failed: %v", err)
+		}
+	}
+
+	if *loadListings {
+		if err := loadListingsData(ctx, *postgresDSN, *elasticURL); err != nil {
+			log.Fatalf("Listing load failed: %v", err)
+		}
+	}
+
+	if *benchmarkListings {
+		if err := runListingBenchmarks(ctx, *postgresDSN, *elasticURL, *workers, *iterations); err != nil {
+			log.Fatalf("Listing benchmark failed: %v", err)
+		}
+	}
+
+	if *initPhotoStorage {
+		if err := initPhotos(ctx, *postgresDSN); err != nil {
+			log.Fatalf("Photo init failed: %v", err)
+		}
+	}
+
+	if *loadPhotoStorage {
+		if err := loadPhotos(ctx, *postgresDSN, *photosConfig); err != nil {
+			log.Fatalf("Photo load failed: %v", err)
+		}
+	}
+
+	if *benchmarkPhotoStorage {
+		if err := runPhotoBenchmarks(ctx, *postgresDSN, *photosConfig, *workers, *iterations); err != nil {
+			log.Fatalf("Photo benchmark failed: %v", err)
+		}
+	}
+
+	if *benchmarkIndexJoins {
+		if err := runIndexJoinBenchmarks(ctx, *postgresDSN, *workers, *iterations); err != nil {
+			log.Fatalf("Index/join benchmark failed: %v", err)
+		}
+	}
+
+	if !*generate && !*initElasticIndex && !*load && !*loadPostgresOnly && !*runBenchmark && !*generateListings && !*initListings && !*loadListings && !*benchmarkListings && !*initPhotoStorage && !*loadPhotoStorage && !*benchmarkPhotoStorage && !*benchmarkIndexJoins {
 		fmt.Println("Usage: benchmark [-generate] [-load] [-benchmark] [flags]")
 		fmt.Println()
 		fmt.Println("Options:")

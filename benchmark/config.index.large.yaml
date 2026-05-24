@@ -1,0 +1,12 @@
+# Isolated PostgreSQL index/join benchmark dataset.
+# Large enough for report-grade local runs on a 16GB RAM machine without
+# turning each index-profile reload into a multi-hour operation.
+users: 200000
+orders: 1000000
+order_items: 3000000
+products: 200000
+categories: 10000
+batch_size: 50000
+workers: 4
+time_range_days: 365
+seed: 42

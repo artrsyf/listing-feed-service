@@ -33,6 +33,11 @@ make init-db       # пересоздать PostgreSQL schema + benchmark indexe
 make init-elastic  # пересоздать индекс orders в Elasticsearch
 make load          # загрузить сгенерированные данные
 make benchmark     # запустить сценарии чтения
+make listing       # запустить marketplace/listing read-model benchmark
+make listing-large # большой marketplace/listing benchmark для отчета
+make photos        # PostgreSQL bytea vs MinIO benchmark для фотографий
+make photos-large  # большой benchmark фотографий, около 5GB payload
+make index-joins-large # изолированный benchmark PostgreSQL index profiles + join modes
 make smoke         # полный короткий проверочный прогон
 make reset         # удалить контейнеры и volume с данными БД
 make down          # остановить контейнеры без удаления volume
@@ -77,6 +82,19 @@ Elasticsearch:
 - terms aggregation по стране пользователя;
 - range query по `created_at`;
 - term query по стране пользователя.
+
+Marketplace/listing read model:
+
+- PostgreSQL search page через `listings`, `listing_sellers`, `listing_attribute_values`;
+- PostgreSQL facets по городу/бренду с фильтрами;
+- Elasticsearch search page по денормализованному документу `listings`;
+- Elasticsearch facets/aggregations по тем же фильтрам.
+
+Photo/object storage:
+
+- PostgreSQL хранит бинарные payload-ы в `photo_blobs.data BYTEA`;
+- MinIO хранит те же payload-ы как S3 objects;
+- отчет показывает размер PostgreSQL relation/индексов/raw payload, сумму размеров MinIO objects и random-read latency/throughput.
 
 Метрики: total requests, duration, throughput, avg/min/max latency, p50/p95/p99.
 

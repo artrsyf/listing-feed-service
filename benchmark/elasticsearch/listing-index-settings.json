@@ -1,0 +1,29 @@
+{
+  "settings": {
+    "number_of_shards": 2,
+    "number_of_replicas": 0,
+    "refresh_interval": "30s"
+  },
+  "mappings": {
+    "properties": {
+      "listing_id": { "type": "long" },
+      "seller": {
+        "properties": {
+          "id": { "type": "long" },
+          "rating": { "type": "float" }
+        }
+      },
+      "category_id": { "type": "long" },
+      "city": { "type": "keyword" },
+      "title": { "type": "text" },
+      "description": { "type": "text" },
+      "price": { "type": "double" },
+      "condition": { "type": "integer" },
+      "delivery": { "type": "boolean" },
+      "promoted": { "type": "boolean" },
+      "status": { "type": "integer" },
+      "created_at": { "type": "date", "format": "strict_date_optional_time||epoch_millis" },
+      "attrs": { "type": "object", "dynamic": true }
+    }
+  }
+}

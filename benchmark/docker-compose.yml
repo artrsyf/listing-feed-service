@@ -51,6 +51,25 @@ services:
     networks:
       - benchmark-network
 
+  minio:
+    image: minio/minio:latest
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: benchmark
+      MINIO_ROOT_PASSWORD: benchmark123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9000/minio/health/ready >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks:
+      - benchmark-network
+
   kibana:
     image: docker.elastic.co/kibana/kibana:8.13.4
     profiles: ["tools"]
@@ -81,10 +100,15 @@ services:
     environment:
       POSTGRES_DSN: postgres://benchmark:benchmark@postgres:5432/benchmark?sslmode=disable
       ELASTIC_URL: http://elasticsearch:9200
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: benchmark
+      MINIO_SECRET_KEY: benchmark123
+      MINIO_BUCKET: photos
 
 volumes:
   postgres_data:
   elasticsearch_data:
+  minio_data:
   go_cache:
   go_build_cache:
 

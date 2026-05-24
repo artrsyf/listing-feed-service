@@ -1,0 +1,7 @@
+# Large photo storage benchmark dataset.
+# Around 5GB of raw binary payloads before backend-specific overhead.
+photos: 20000
+avg_size_kb: 256
+size_jitter_pct: 25
+batch_size: 100
+seed: 42

@@ -1,0 +1,8 @@
+# Large marketplace/listing dataset.
+# Intended for report-grade runs on a 16GB RAM developer machine.
+listings: 1000000
+sellers: 200000
+categories: 10000
+batch_size: 50000
+time_range_days: 365
+seed: 42
